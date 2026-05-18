@@ -11,7 +11,7 @@ You are processing today's session voice notes from the inbox into the vault. Ta
 - **Inbox file**: `$VAULT_PATH/2 - Business/Clients/_inbox.md`
 - **Client files directory**: `$VAULT_PATH/2 - Business/Clients/` (each client has a subfolder; main file is `[Client Name]/[Client Name].md`)
 - **tasks.md**: `$VAULT_PATH/2 - Business/Operations/tasks.md`
-- **Khaela reports dir**: `$VAULT_PATH/2 - Business/Clients/_khaela-reports/`
+- **Khaela reports dir**: `$VAULT_PATH/2 - Business/Operations/Khaela/_session-reports/`
 
 ## Client roster
 
@@ -120,29 +120,47 @@ Do not duplicate a task that already appears word-for-word in the section.
 ### 7. Generate Khaela's daily report
 
 Write a markdown file to:
-`$VAULT_PATH/2 - Business/Clients/_khaela-reports/[YYYY-MM-DD].md`
+`$VAULT_PATH/2 - Business/Operations/Khaela/_session-reports/[YYYY-MM-DD].md`
 
-Create the `_khaela-reports/` folder if it doesn't exist.
+Create the `_session-reports/` folder if it doesn't exist.
 
 > **Note**: delivery method to be confirmed with Khaela. For now this lands as a vault file.
 
 Content:
 
 ```markdown
-# Client Reports — [Today's Date, friendly format]
+# Session Reports — [Today's Date, friendly format]
 
-@Khaela — here are today's session reports.
+@Khaela — session notes below. Transcripts are at the bottom.
+
+---
 
 ## [Client Name]
+**[YYYY-MM-DD] — [Workout Type]**
 
-### Transcript
-[Original raw transcript from inbox, including the # heading line]
+[2–4 bullet points covering the key things that happened — what moved well, what was flagged, any notable coaching points. Plain prose, no square brackets.]
 
-### Summary
-[Structured fields + cleaned bullets — same content written to client file in step 5]
+**Programme changes:**
+- [Specific change to make in OneFit or the written programme]
+
+**To do:**
+- [Actionable task for Khaela]
+
+---
+
+## Transcripts
+
+### [Client Name] — [YYYY-MM-DD]
+[Original raw transcript from inbox]
 ```
 
-One `## [Client Name]` section per client processed, in inbox order.
+Rules for the summary section:
+- Write in plain sentences or short bullets — no `exercises: [...]` or `program_changes: [...]` field syntax
+- Only include programme changes and tasks that are actually present; omit those headings if there's nothing to action
+- For cancellations with no session content, one sentence is enough — state what happened and any credit/task
+- Keep each client block short enough to scan in 10 seconds
+
+One `## [Client Name]` summary section per client processed, in inbox order. All raw transcripts collected into a single `## Transcripts` section at the end, in the same order.
 
 ### 8. Handle unmatched blocks
 
