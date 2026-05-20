@@ -73,7 +73,8 @@ EXERCISE_MAP = [
         "overhead press", "military press", "shoulder press", "ohp",
     ]),
     ("Dips", "Dips-Technique", [
-        "chest dips", "tricep dips", "dips",
+        "assisted dips", "assisted dip", "chest dips", "tricep dips",
+        "dips", "dip",
     ]),
     # ── Upper pull ─────────────────────────────────────────────────────────
     ("Barbell Row", "Barbell-Row-Technique", [
@@ -174,12 +175,21 @@ def build_section(exercises: list[tuple[str, str]]) -> str:
 
 def update_file(path: Path) -> None:
     content = path.read_text(encoding="utf-8")
-
-    # Also scan sibling Programmes.md if present (post-migration layout)
-    programmes_path = path.parent / "Programmes.md"
     scan_content = content
-    if programmes_path.exists():
-        scan_content += "\n" + programmes_path.read_text(encoding="utf-8")
+
+    parent = path.parent
+    client_name = parent.name
+
+    # Sibling Programmes file: canonical "[Name] - Programmes.md", fallback to bare
+    for candidate in (parent / f"{client_name} - Programmes.md", parent / "Programmes.md"):
+        if candidate.exists():
+            scan_content += "\n" + candidate.read_text(encoding="utf-8")
+            break
+
+    # Sibling Session Log file (canonical separate-file layout)
+    session_log = parent / f"{client_name} - Session Log.md"
+    if session_log.exists():
+        scan_content += "\n" + session_log.read_text(encoding="utf-8")
 
     exercises = find_exercises(scan_content)
 

@@ -1,5 +1,5 @@
 ---
-description: Process today's session voice notes from the inbox, route to client files, extract structured data, write Khaela's report to vault, append tasks to tasks.md, clear the inbox
+description: Process today's session voice notes from the inbox, route to client files, extract structured data, append rows to sessions.csv and client Bookings.md, write Khaela's report to vault, append tasks to tasks.md, clear the inbox
 ---
 
 # Process Sessions
@@ -34,6 +34,7 @@ Match dictated names against this roster. Use fuzzy matching but never guess. If
 - Simon Roache
 - Taylor Reikofski
 - Tulha Patel
+
 
 ## Steps
 
@@ -103,7 +104,36 @@ recurring_themes: [shoulder twinge — 2nd mention this month]
 
 The bullets below the structured block are the original voice note content, lightly cleaned (sentence case, punctuation, but not reworded).
 
-### 6. Append tasks to tasks.md
+### 6. Update sessions.csv and client bookings file
+
+**sessions.csv** (`$VAULT_PATH/2 - Business/Operations/Bookings/sessions.csv`):
+
+Append one row per processed session. Column order: `date,time,client_name,status,regular_flexible,location,week_number,rate_at_time,credit_burn,notes`
+
+- `date`: YYYY-MM-DD from the parsed header
+- `time`: use if present in header or transcript; leave blank if not stated
+- `client_name`: matched client name (from roster, canonical form)
+- `status`: `complete` for normal sessions; `cancelled-no-fee` or `coach-missed` where applicable (infer from transcript)
+- `regular_flexible`: `regular` if this is a standing slot, `flexible` if ad-hoc — default `regular` if unclear
+- `location`: `Commando Temple` unless stated otherwise
+- `week_number`, `rate_at_time`: leave blank
+- `credit_burn`: `FALSE` by default; `TRUE` only if the transcript explicitly indicates a credit was used
+- `notes`: brief note for anything unusual; empty for clean sessions
+
+**Client Bookings.md** (`$VAULT_PATH/2 - Business/Clients/[Client Name]/[Client Name] - Bookings.md`):
+
+If this file doesn't exist for a client, skip silently — do not create it.
+
+1. If a row matching the **session's date** exists in the Upcoming table, remove it from Upcoming.
+2. Prepend a new row to the top of the History table:
+
+   | Date | Time | Type | Notes |
+   | YYYY-MM-DD | HH:MM or blank | regular/flexible | Cancellation note or blank |
+
+3. For cancellations or coach-missed, add a brief note matching the sessions.csv note.
+4. Check that the row isn't already present in History before inserting (avoid duplicates on re-runs).
+
+### 7. Append tasks to tasks.md
 
 **File**: `$VAULT_PATH/2 - Business/Operations/tasks.md`
 
@@ -117,7 +147,7 @@ If the `## [Client Name]` section already exists, insert the new tasks directly 
 
 Do not duplicate a task that already appears word-for-word in the section.
 
-### 7. Generate Khaela's daily report
+### 8. Generate Khaela's daily report
 
 Write a markdown file to:
 `$VAULT_PATH/2 - Business/Operations/Khaela/_session-reports/[YYYY-MM-DD].md`
@@ -162,7 +192,7 @@ Rules for the summary section:
 
 One `## [Client Name]` summary section per client processed, in inbox order. All raw transcripts collected into a single `## Transcripts` section at the end, in the same order.
 
-### 8. Handle unmatched blocks
+### 9. Handle unmatched blocks
 
 If a client name in a header can't be confidently matched against the roster:
 - Don't process the block
@@ -170,7 +200,7 @@ If a client name in a header can't be confidently matched against the roster:
 - Leave it in the inbox with `# UNMATCHED:` prefixed to the original heading
 - Report it in the final summary
 
-### 9. Clear the inbox
+### 10. Clear the inbox
 
 After all matched blocks have been successfully processed:
 - Reset `_inbox.md` to its template state (heading + drop line)
@@ -185,7 +215,7 @@ Paste voice notes below. First dictation of each session is the header (e.g. "Ri
 
 ```
 
-### 10. Report
+### 11. Report
 
 Reply with a tight summary:
 - Clients processed (with workout type)

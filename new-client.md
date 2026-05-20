@@ -138,6 +138,8 @@ Per-cycle training programmes. Newest at top.
 
 ## Cycle 1
 
+**Focus:** TBD
+
 *Programme to be written.*
 ```
 
