@@ -14,7 +14,7 @@ Each topic bullet is tagged with one of three tiers. Sub-bullets contain Tom's e
 | Tag | Tier | What it means | Pipeline |
 |---|---|---|---|
 | `#overview` | Cursory summary | Never heard of it / no knowledge — just need the gist | Web synthesis (lightweight) |
-| `#evidence` | Evidence check | Have a stance — need studies/data to back it | PubMed + Examine + synthesis |
+| `#evidence` | Evidence check | Have a stance — need studies/data to back it | PubMed + Consensus + synthesis |
 | `#research` | Deep research | Need genuine study before forming a view | Full `/research` → `/notebooklm-build` → `/content-brief` |
 
 ---
@@ -141,7 +141,7 @@ Subfolder map:
 
 1. Open positioning-topics.md. Find the topic line. Read Tom's stance note — this is the position to validate and support.
 2. Run `/pubmed [topic]` — retrieve 5–8 studies. Prefer meta-analyses, systematic reviews, RCTs, year 2015+.
-3. Run `/examine [topic]` — retrieve the evidence grade and top outcomes.
+3. Run `/consensus [topic]` — retrieve the Consensus Meter verdict and the top study cards. (For supplement-specific evidence grades, run `/examine [topic]` instead or in addition.)
 4. Synthesise an evidence note. Translate study findings into plain coaching language. Flag where the evidence supports Tom's stance cleanly, and where it is weaker or more nuanced.
 5. Write to vault. Print confirmation.
 6. Output a suggested refined stance note, ready to paste back into positioning-topics.md.
@@ -156,7 +156,7 @@ tags:
   - tier/evidence
   - status/evidence-complete
 created: [YYYY-MM-DD]
-source: pubmed + examine
+source: pubmed + consensus
 ---
 
 # [Topic] — Evidence File
@@ -181,9 +181,9 @@ source: pubmed + examine
    https://pubmed.ncbi.nlm.nih.gov/[PMID]/
    [Study type] · [Journal] · [Year]
 
-## Examine.com summary
+## Consensus.app summary
 
-[Evidence grade + 2–4 top outcomes in plain language]
+[Consensus Meter verdict + 2–4 top study findings in plain language]
 
 ## Where the evidence is thin
 
@@ -206,7 +206,7 @@ source: pubmed + examine
 
 Run the full existing pipeline in order:
 
-1. **`/research [topic]`** — four-source sweep (YouTube, PubMed, Examine, Substack). Produces the source URL list.
+1. **`/research [topic]`** — four-source sweep (YouTube, PubMed, Consensus, Substack). Produces the source URL list.
 2. **`/notebooklm-build [topic]`** — creates a NotebookLM notebook, adds all sources, runs the full 20-query set, synthesises and writes the Obsidian knowledge note to the vault.
 3. **`/content-brief [topic]`** — reads the NotebookLM output and produces angle candidates and a pre-filled content sheet, ready for the `angle-generation` and `content-sheet` skills.
 

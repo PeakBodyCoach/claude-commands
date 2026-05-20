@@ -22,13 +22,14 @@ Run the `/pubmed` command for **$ARGUMENTS**, or execute directly:
 2. Fetch summaries: `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=[IDS]&retmode=json`
 3. Keep 5–8 results: meta-analyses, systematic reviews, RCTs preferred. Year 2015+.
 
-### Source 3 — Examine.com
+### Source 3 — Consensus.app
 
-Run the `/examine` command for **$ARGUMENTS**, or execute directly:
+Run the `/consensus` command for **$ARGUMENTS**, or execute directly:
 
-1. Try: `https://examine.com/supplements/$ARGUMENTS-slug/`
-2. Fallback: `https://examine.com/nutrition/$ARGUMENTS-slug/`
-3. Final fallback: `https://examine.com/search/?q=$ARGUMENTS`
+1. Fetch: `https://consensus.app/results/?q=$ARGUMENTS`
+2. If the page renders client-side and returns no parseable content, output the URL and a CiC prompt for manual extraction (see `/consensus` for the fallback block).
+
+Consensus is an AI-powered academic search engine that returns a directional verdict (yes / no / possibly / mixed) backed by individual study cards. Use it for behavioural, training, nutrition, recovery, and health-outcome questions. For supplement-specific evidence grades, use `/examine` standalone (no longer in the default research sweep).
 
 ### Source 4 — Substack / newsletters
 
@@ -59,12 +60,12 @@ Four sections. Each result uses the same numbered format as the YouTube search c
    [Study type] · [Journal] · [Year]
    [First Author] et al.
 
-## 📊 Examine.com
+## 🧪 Consensus.app
 
-1. **[Topic — Page Type]**
-   https://examine.com/supplements/[slug]/
-   [One-sentence verdict] · Grade: [X]
-   Examine.com
+1. **[Paper Title]**
+   [DOI or Consensus URL]
+   [Verdict / direction] · [Journal] · [Year]
+   [First Author] et al.
 
 ## 📬 Newsletters
 
@@ -84,7 +85,7 @@ After all four sections, output:
 |---|---|---|
 | YouTube | N | [top video or channel] |
 | PubMed | N | [strongest paper or finding] |
-| Examine.com | N | [verdict or top outcome] |
+| Consensus.app | N | [Consensus Meter verdict or strongest cited finding] |
 | Newsletters | N | [top writer or post] |
 
 **Overall evidence picture:** 2–3 sentences on what sources agree on, where uncertainty exists, and any notable conflicts.
