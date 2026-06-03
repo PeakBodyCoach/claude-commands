@@ -592,6 +592,23 @@ If nothing in the research clears the "interesting to an expert" bar, write a si
 
 ---
 
+## Step 9 — Share notebook (optional)
+
+**Known recipients:**
+- Khaela → `espiritu.pro.work@gmail.com`
+
+If the user provided a recipient email or name (e.g. "share with Khaela"), share the notebook with them as a viewer:
+
+```bash
+python scripts/run.py nlm.py share-permission <email> --role viewer
+```
+
+Report the confirmation. If no email was provided, skip this step silently — do not prompt.
+
+The recipient will receive a Google share invite and can open the notebook at notebooklm.google.com using their Gmail account. As a viewer they can play the audio overview, view the slide deck and briefing doc, and ask follow-up questions via the chat interface. They cannot add sources or generate new studio content.
+
+---
+
 ## Cleanup
 
 ```bash
