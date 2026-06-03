@@ -49,18 +49,23 @@ Before running anything else, check the path the user passed:
 
 ## What this command produces
 
-For every article, the Peak Body Coach blog system uses **three** image assets selected from **four candidate types**:
+Every blog post ships with three image assets: a hero (featured image) and two body images. The hero is always sourced as stock. The two body images are marker-driven: the article body contains exactly 2 typed HTML-comment markers, and this command produces content for whichever slot types the markers call for.
 
-| Candidate | What it is | Produced by |
+| Slot | Source | Marker (in body) | Produced by |
+|---|---|---|---|
+| Hero | Always — featured image | None (implicit, top of post) | `/blog-images` sources, `featured-image` skill treats |
+| Body slot 1 | Marker-driven | `<!-- IMAGE: quote -->` or `<!-- IMAGE: diagram -->` or `<!-- IMAGE: body -->` | Per type — see slot rules below |
+| Body slot 2 | Marker-driven | Same |
+
+**Body slot type → producer:**
+
+| Marker type | Producer skill | Stock needed? |
 |---|---|---|
-| Hero stock | Stock photo + brand treatment | `/blog-images` sources, `featured-image` skill treats |
-| Body stock | Second stock photo + brand treatment | `/blog-images` sources, `featured-image` skill treats |
-| Pull-quote card | Branded quote graphic | `pull-quote` skill |
-| Diagram | Editorial infographic | `infographic-prompt` skill → Gemini Nano Banana 2 |
+| `quote` | `pull-quote` | No (sentence identified from body) |
+| `diagram` | `infographic-prompt` (Gemini) or `diagram-prompt` (NotebookLM) | No (layout proposed from body content) |
+| `body` | `featured-image` skill | Yes (3 stock candidates downloaded) |
 
-This command always sources hero stock, always sources body stock, always identifies a pull-quote candidate, and always proposes a diagram layout. **No conditional logic, no flags.** The user picks the three candidates that best serve the article.
-
-The standard assembly is hero + quote + diagram. Body stock substitutes for either quote or diagram when the user prefers it on the day.
+**Marker authority.** The markers in the body are authoritative on which slot types to produce. If the user wants to swap a slot type (e.g. diagram fit is weak, prefer body stock instead), they edit the marker in the body and re-run `/blog-images`. This command does not propose unmarked candidate types as alternatives.
 
 ## Steps
 
@@ -83,7 +88,29 @@ Open the file at `$ARGUMENTS` and extract:
   - Mix of broad ("glp-1", "weight loss") and specific ("muscle preservation", "protein on glp-1")
   - Lowercase, comma-separated when emitted
 
+### 1a. Read body image markers
+
+Walk the body and find every `<!-- IMAGE: type -->` HTML comment marker. Capture in document order as **Slot 1** and **Slot 2**, recording each marker's type (`quote`, `diagram`, or `body`) and its position (line number, surrounding context).
+
+**Validation — stop the command if any of these fail:**
+
+- Marker count must be exactly 2. If 0 or 1 markers, stop with:
+
+  > Body has [N] image marker(s) but exactly 2 are required. See `article-structure.md` under Image Markers in Body for the spec, or run the article through `blog-writing` again to have the markers inserted.
+
+  If 3+ markers, stop with:
+
+  > Body has [N] image markers but exactly 2 are required. Remove the surplus marker(s) per the standard PBC assembly (hero + 2 body images).
+
+- Each marker's type must be one of `quote`, `diagram`, or `body`. If an unknown type is found, stop with:
+
+  > Marker `<!-- IMAGE: [type] -->` at line [N] uses an unsupported type. Allowed: `quote`, `diagram`, `body`. Edit the marker and re-run.
+
+Once validation passes, you know which slot types to produce content for in the following steps. From this point on, only do work for the slot types the markers call for.
+
 ### 2. Identify the sharpest pull-quote candidate
+
+**Skip this step if no marker has type `quote`.**
 
 Read the article and find the single best candidate sentence. Rules:
 
@@ -94,34 +121,64 @@ Read the article and find the single best candidate sentence. Rules:
 - Avoid sentences starting with "If", "When", "While" — usually conditional setups
 - The most quotable line is often a tight assertion, not the most "important" sentence
 
-If no sentence in the article meets these rules well, return the closest match with a note flagging it. The user decides whether to use it.
+The candidate sentence should be near the quote marker's position in body. If the sentence immediately before the marker doesn't meet the rules, look at the surrounding two or three paragraphs for the best match — the writer placed the marker there for a reason, even if the strongest sentence isn't the one directly above.
+
+If no sentence in the article meets these rules well, return the closest match with a note flagging it. The user decides whether to use it or swap the marker for `body`.
 
 ### 3. Propose a diagram layout and draft the content
 
-Match the article's structure to one of the six `infographic-prompt` layouts:
+**Skip this step if no marker has type `diagram`.**
 
-| Layout | Use when the article contains... |
-|---|---|
-| `single-stat-callout` | One key statistic with supporting context (e.g. "19% of people maintain goals past 8 weeks") |
-| `listicle` | A list of 3-7 reasons, principles, or actions |
-| `hero-breakdown` | A composition split or allocation (e.g. "where should your protein come from") |
-| `two-column-comparison` | Expectations vs reality, myth vs fact, before vs after |
-| `three-elements` | A 3-pillar framework with single-word concepts |
-| `acronym-framework` | An acronym to unpack (SMART, FITT, SWOT, custom) |
+Match the article's structure to one of the eleven `infographic-prompt` layouts. Check them in the order listed — the first strong match wins.
 
-Pick the strongest fit and write a one-line rationale. If no layout fits well, propose the closest with a note that the diagram fit is weak — the user can opt to skip the diagram slot in favour of body stock.
+| Priority | Layout | Use when the article contains... |
+|---|---|---|
+| 1 | `single-stat-callout` | One key statistic with supporting context (e.g. "19% of people maintain goals past 8 weeks"). Most visually strong layout — reach for this first whenever a single number is the hero of the article. |
+| 2 | `spectrum` | A dose-response or optimal-range argument (e.g. "how much protein", "how much volume", "sleep duration"). The content sits on a continuous scale with a meaningful sweet spot. |
+| 3 | `mechanism` | A cause-and-effect chain explaining HOW something works (e.g. "why GLP-1s cause muscle loss", "how MPS works", "the cortisol-sleep cycle"). Order is causal, not just sequential. |
+| 4 | `evidence-callout` | A bold research claim supported by 3-4 evidence points, where the finding is a sentence rather than a number (e.g. "protein distribution matters as much as total intake"). |
+| 5 | `action-plan` | A sequenced set of 3-6 imperative steps the reader should take — instructional "how to" content. Items are things to DO, in order. |
+| 6 | `hero-breakdown` | A composition split or allocation with percentages (e.g. "where should your protein come from", "how to split your training week"). |
+| 7 | `priority-stack` | A ranked hierarchy where the order signals importance — "do this first, not last" (e.g. nutrition hierarchy, training priority). Items are not equally weighted. |
+| 8 | `acronym-framework` | An acronym to unpack — established (SMART, FITT) or invented PBC framework. |
+| 9 | `two-column-comparison` | The article explicitly structures its argument as parallel opposing pairs — 4-7 named left/right pairs already present in the text (e.g. a dedicated myth-vs-fact section with multiple paired items). Do NOT use just because the article mentions misconceptions or contrasts ideas in passing. |
+| 10 | `listicle` | A list of principles, observations, or aphorisms — things the reader should THINK or KNOW, not do. Items are equally weighted, not ranked, not imperatives. |
+| 11 | `three-elements` | Exactly three single-word pillar concepts (e.g. "lift, eat, sleep"). Weakest layout — only use if the content genuinely reduces to three punchy single words with no further structure needed. |
 
-After picking the layout, read both files:
-- `C:/Users/Tom/.claude/skills/infographic-prompt/style-preset.json`
-- `C:/Users/Tom/.claude/skills/infographic-prompt/layouts/[chosen-layout].json`
+Using the priority table, identify the **3-4 most plausible layouts** for this article. For each, write a one-sentence gist describing what the infographic would show. Mark your recommendation.
 
-Fill in all content placeholders in the layout's `content` block from the article. Voice rules apply: British spelling, no em dashes, Title Case for comparison rows and secondary labels, ALL CAPS for titles and kicker pills, sentence case for body items and taglines. Do not leave any placeholder unfilled. The filled-in style-preset and layout JSON become the paste-ready Gemini prompt in Candidate D.
+**Example output format:**
+- **mechanism** (recommended): restriction → forbidden fruit effect → binge → tighter rules, 4-node left-to-right chain
+- **evidence-callout**: hero claim "THE RESTRICTION WAS PRODUCING THE BINGE ALL ALONG" + 3 Polivy/Herman/Mann research points
+- **listicle**: 5 signs you're in the binge-restrict loop, on a cream paper card
+- **two-column-comparison** (weak fit): discipline camp vs intuitive eating camp, 5 paired rows
 
-Then, also read `C:/Users/Tom/.claude/skills/diagram-prompt/SKILL.md`. Pick a composition archetype from that skill that suits the article's content (single-figure with annotation, anatomical comparison, single concept with supporting graphic, or sequence diagram). Draft the natural-language composition block for a NotebookLM diagram prompt. If the article's content is not anatomy or biomechanics, pick the closest conceptual fit and flag the weakness. Both prompts go into Candidate D — the user picks which to generate, or generates both.
+Present the gists and ask Tom which layout to generate. **Wait for his response before proceeding.**
+
+Once Tom confirms a layout:
+
+1. Read `C:/Users/Tom/.claude/skills/infographic-prompt/layouts/[chosen-layout].json`
+2. Fill in all content placeholders from the article. Voice rules apply: British spelling, no em dashes, ALL CAPS for titles and kicker pills, sentence case for body items and taglines. Do not leave any placeholder unfilled.
+3. Write the filled `content` block (just the content object, not the full layout JSON) to `images/_diagram-content.json` inside the article's images folder.
+4. Run the generator:
+
+```powershell
+cd C:/Users/Tom/projects/stock-images
+python generate_infographic.py `
+  --layout [chosen-layout] `
+  --content "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/_diagram-content.json" `
+  --output "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/[topic-slug]-diagram.png"
+```
+
+5. Report the result: image size if successful, or the error message if it failed.
+
+If the script fails or Tom wants a fallback, the NotebookLM D2 prompt in `image-plan.md` is always available as an alternative.
 
 ### 4. Generate hero and body search queries
 
-For each slot, write **3 candidate search queries**. Rules:
+**Hero queries: always generate.** **Body queries: only if a marker has type `body`.**
+
+For each slot you need queries for, write **3 candidate search queries**. Rules:
 
 - 2–4 words each
 - Concrete nouns and visual concepts, not abstract ideas
@@ -130,17 +187,19 @@ For each slot, write **3 candidate search queries**. Rules:
 
 **Hero** captures the article's overall topic. Editorial, magazine-quality. Lead-image energy.
 
-**Body** illustrates a specific section, concept, or counter-point. Should feel different from the hero — if hero is wide and atmospheric, body is closer and specific. If hero is a person, body is an object, and vice versa.
+**Body** illustrates a specific section, concept, or counter-point. Should feel different from the hero — if hero is wide and atmospheric, body is closer and specific. If hero is a person, body is an object, and vice versa. The body slot's marker position tells you which section it illustrates; pick queries that serve that section's content, not the article overall.
 
-**Avoid duplication.** Hero and body queries must not produce visually similar images.
+**Avoid duplication** (only relevant when both hero and body are stock). Hero and body queries must not produce visually similar images.
 
 **Worked example.** Article: "Why GLP-1s Cause Muscle Loss And What To Do About It"
 - Hero queries: `injection pen close up`, `prescription medication vial`, `weight loss medication`
-- Body queries: `dumbbell rack gym`, `bathroom scale feet`, `elderly person walking`
+- Body queries (if `body` marker exists): `dumbbell rack gym`, `bathroom scale feet`, `elderly person walking`
 
 ### 5. Build the queries config
 
-Write a temporary config to `C:/Users/Tom/projects/stock-images/_blog-config.json`:
+Write a temporary config to `C:/Users/Tom/projects/stock-images/_blog-config.json`. Always include the `hero` key. Include the `body` key only if a marker has type `body`.
+
+If both slots are needed:
 
 ```json
 {
@@ -149,6 +208,17 @@ Write a temporary config to `C:/Users/Tom/projects/stock-images/_blog-config.jso
     "queries": ["query1", "query2", "query3"]
   },
   "body": {
+    "sources": ["unsplash", "pexels"],
+    "queries": ["query1", "query2", "query3"]
+  }
+}
+```
+
+If only hero is needed (markers are quote + diagram, or quote + quote, etc.):
+
+```json
+{
+  "hero": {
     "sources": ["unsplash", "pexels"],
     "queries": ["query1", "query2", "query3"]
   }
@@ -208,23 +278,23 @@ All commands below assume you're in the article folder. Set that first:
 cd "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]"
 ```
 
-Four candidate types, pick three (or sometimes four) for the article.
+Every article ships with three images: a hero (featured) plus two body images. The hero is always present. The two body slots are marker-driven — `/blog-images` read the two `<!-- IMAGE: type -->` markers in the article body and only the matching candidate sections are included below.
 
-The **standard assembly** for Peak Body Coach is:
-- Slot 1 = Hero stock (always)
-- Slot 2 = Pull-quote card
-- Slot 3 = Diagram
+## Slot map (from body markers)
 
-Substitute body stock in for slot 2 or slot 3 when the proposed quote
-or diagram doesn't fit the article on the day. Use both stock slots
-plus quote OR diagram if the article is photo-led.
+- **Hero** — always required (featured image, no body marker)
+- **Slot 1** — type: `[type from marker 1]`, marker at line [N]
+- **Slot 2** — type: `[type from marker 2]`, marker at line [N]
 
-Each candidate type below has a ready-to-run command. Copy, edit if
-needed, run from the article folder.
+If a slot's fit feels weak after reviewing this plan, edit the marker in the article body (change `quote` → `body`, `diagram` → `body`, etc.) and re-run `/blog-images`. Markers are authoritative.
+
+Each section below has a ready-to-run command. Copy, edit if needed, run from the article folder.
 
 ---
 
-## Candidate A — Hero stock (always slot 1)
+## Hero (always required, featured image)
+
+**Include this section unconditionally.** Hero is the featured image; it has no body marker and is always present.
 
 **Suggested treatment args:**
 - headline: "[headline candidate, ALL CAPS]"
@@ -264,7 +334,9 @@ The `--slug` flag rewrites the filename to `[topic-slug]-featured.png` for SEO. 
 
 ---
 
-## Candidate B — Body stock
+## Body stock slot (include if any marker has type `body`)
+
+**Include this section in the image-plan.md output only if Slot 1 or Slot 2 has type `body`.** Label the section heading with the slot number it fills (e.g. "Slot 1 — Body stock" or "Slot 2 — Body stock"). If both slots are type `body`, include this section once and note both slot numbers; the user will produce two separate treated images using different headlines.
 
 **Stock candidates** (in `images/body/`):
 
@@ -303,7 +375,9 @@ The `--slug` is set to `[topic-slug]-body` to differentiate the body-image filen
 
 ---
 
-## Candidate C — Pull-quote card
+## Pull-quote slot (include if any marker has type `quote`)
+
+**Include this section in the image-plan.md output only if Slot 1 or Slot 2 has type `quote`.** Label the section heading with the slot number it fills (e.g. "Slot 1 — Pull-quote card").
 
 **Sharpest candidate sentence found:**
 
@@ -338,46 +412,39 @@ The `--slug` rewrites the filename to `[topic-slug]-quote.png` for SEO. The pull
 
 ---
 
-## Candidate D — Diagram
+## Diagram slot (include if any marker has type `diagram`)
 
-**Best-fit layout:** [layout name]
+**Include this section in the image-plan.md output only if Slot 1 or Slot 2 has type `diagram`.** Label the section heading with the slot number it fills (e.g. "Slot 2 — Diagram").
 
-**Why this layout:** [one-line — what the article contains that makes
-this layout the right choice]
+**Layout used:** [layout name]
 
-[OR, if no layout fits well:]
+**Why:** [one-line rationale]
 
-**Best-fit layout:** [closest layout]
+**Generated at:** `images/[topic-slug]-diagram.png` ([size]KB)
 
-**Note:** Diagram fit is weak for this article. Consider skipping the
-diagram slot and using body stock instead.
+**To regenerate** (if the output needs a retry), run from the article folder:
 
-Candidate D has two prompts — one for each visual lane. Pick one to generate, or generate both.
-
-### D1 — Infographic prompt (Gemini Nano Banana 2, typography-only, strict brand)
-
-**Paste-ready Gemini prompt:**
-
-```
-Generate the following infographic exactly as specified. Apply every constraint. Do not add elements not explicitly listed.
-
-FORMAT: [layout's format_default]
-
-STYLE PRESET (locked — apply to all output):
-[full style-preset.json content]
-
-COMPOSITION (this specific layout):
-[full layout JSON with all content placeholders filled in from the article]
+```powershell
+cd C:/Users/Tom/projects/stock-images
+python generate_infographic.py `
+  --layout [chosen-layout] `
+  --content "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/_diagram-content.json" `
+  --output "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/[topic-slug]-diagram.png"
 ```
 
-After generating, crop the watermark (run from the article folder):
-`python ~/.claude/skills/infographic-prompt/scripts/remove_notebooklm_watermark.py images/<downloaded.png> --bg "#171717" --mask-width 200 --mask-height 50`
-
-Save as a file starting with `gemini` in `images/`.
+The content JSON is at `images/_diagram-content.json` — edit it directly if you want to tweak wording before regenerating.
 
 ---
 
-### D2 — Diagram prompt (NotebookLM, illustration-led, loosened brand)
+### Fallback — Diagram prompt (NotebookLM, illustration-led, loosened brand)
+
+Use this if the Gemini API output is poor, or if the article is anatomy/biomechanics content that needs illustration rather than typography.
+
+**Composition archetype:** [single-figure with annotation / anatomical comparison / single concept with supporting graphic / sequence diagram]
+
+**Fit note:** [strong / weak — one line on why. If weak (e.g. non-anatomy content), flag it here.]
+
+### D2 — NotebookLM prompt
 
 **Composition archetype:** [single-figure with annotation / anatomical comparison / single concept with supporting graphic / sequence diagram]
 
@@ -470,13 +537,14 @@ Summarise in chat:
 - Category: [category]
 - Headline proposed: [headline]
 - SEO keywords: [comma-separated list]
-- Pull-quote candidate: [first 50 chars of the quote]... — [strong / weak]
-- Diagram layout proposed: [layout] — [strong / weak fit]
+- Slot map: Slot 1 = [type], Slot 2 = [type] (from body markers)
+- Pull-quote candidate (if any quote marker): [first 50 chars of the quote]... — [strong / weak]
+- Diagram generated (if any diagram marker): [layout] — [size]KB at `images/[slug]-diagram.png`, or error message if failed
 - Hero queries: [list]
-- Body queries: [list]
+- Body queries (if any body marker): [list]
 - Total stock images downloaded: [count]
 - Folder: `Blog/1 - Draft/[topic-slug]/`
-- Next step: review `image-plan.md`, pick three of four candidate types, run the relevant commands
+- Next step: review `image-plan.md`, run the slot commands (Hero plus the two body slot commands). If a slot's fit feels weak, edit the marker in the article body and re-run `/blog-images`.
 
 ### 9. Confirm and hand off
 
@@ -492,11 +560,15 @@ Then report whether the article is ready for the publish gate:
 
 - **Article file** — confirmed at `Blog/1 - Draft/[topic-slug]/[topic-slug].md`
 - **`image-plan.md`** — present in the article subfolder
-- **Hero** — `images/[topic-slug]-featured.jpg` present (required for publish)
-- **Pull-quote** — `images/[topic-slug]-quote.jpg` present (optional)
-- **Body** — `images/[topic-slug]-body-featured.jpg` present (optional)
-- **Diagram** — `images/[topic-slug]-diagram.jpg` present, or a `gemini*.jpg` that needs renaming (optional)
-- **Attributions** — `images/attributions.csv` present
+- **Hero** — `images/[topic-slug]-featured.jpg` present (always required)
+- **Slot 1 ([type])** — matching asset present (required, type per marker 1)
+- **Slot 2 ([type])** — matching asset present (required, type per marker 2)
+- **Attributions** — `images/attributions.csv` present (required if hero or any body slot is stock)
+
+Expected filenames by slot type:
+- `quote` → `[topic-slug]-quote.jpg`
+- `diagram` → `[topic-slug]-diagram.jpg` (convert from `[topic-slug]-diagram.png` via the compress step below)
+- `body` → `[topic-slug]-body-featured.jpg`
 
 Finally, tell the user the next step verbatim:
 
@@ -512,6 +584,8 @@ That ends the `/blog-images` flow. Nothing else runs from this command.
 - If a query returns zero results from both sources, mention it in the report so Tom can rerun with a different query
 - Don't delete `_blog-config.json` after the run — leave it for inspection or manual rerun
 - If the article path doesn't exist or can't be read, stop and report the error rather than guessing
-- The pull-quote candidate is always proposed — never refuse to suggest one. If no sentence meets the rules cleanly, propose the closest and flag it as weak so the user can decide.
-- The diagram layout is always proposed — never refuse to suggest one. If no layout fits cleanly, propose the closest and flag it as weak so the user can decide.
-- Both flags ("weak quote", "weak diagram fit") are signals to the user, not directives. The user makes the editorial call from the candidates in front of them.
+- If a quote marker exists, the pull-quote candidate is always proposed — never refuse to suggest one. If no sentence meets the rules cleanly, propose the closest and flag it as weak so the user can decide whether to swap the marker for `body`.
+- If a diagram marker exists, always generate gists for at least 3 layouts and recommend one — never refuse. If no layout fits cleanly, flag it as weak so Tom can swap the marker to `body` if he prefers.
+- The `images/_diagram-content.json` file is left in place after generation — Tom can edit it and rerun `generate_infographic.py` directly without re-running the full command.
+- The `GEMINI_API_KEY` env var must be set before the generator runs. If it's missing the script exits with a clear message.
+- Both flags ("weak quote", "weak diagram fit") are signals to the user, not directives. The user makes the editorial call by editing the marker in the article body and re-running `/blog-images`.

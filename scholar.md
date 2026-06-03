@@ -9,7 +9,7 @@ Two modes:
 Find papers by query string.
 
 ```bash
-python ~/.claude/commands/semantic_scholar.py <query>
+python $HOME\.claude\commands\semantic_scholar.py <query>
 ```
 
 Flags:
@@ -22,8 +22,8 @@ Flags:
 Given a seed paper (PMID, DOI, or Semantic Scholar ID), return the top-cited papers that cite it (forward walk) AND the top-cited papers it references (backward walk). This is the killer feature: surface the foundational papers everyone in a topic cites, plus the newer work building on a key paper.
 
 ```bash
-python ~/.claude/commands/semantic_scholar.py --walk PMID:12345678
-python ~/.claude/commands/semantic_scholar.py --walk 10.1371/journal.pone.0088384
+python $HOME\.claude\commands\semantic_scholar.py --walk PMID:12345678
+python $HOME\.claude\commands\semantic_scholar.py --walk 10.1371/journal.pone.0088384
 ```
 
 Flags:

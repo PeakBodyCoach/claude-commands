@@ -34,7 +34,7 @@ PAPER_FIELDS = ",".join(
         "authors.name",
         "year",
         "venue",
-        "publicationVenue.name",
+        "publicationVenue",
         "citationCount",
         "tldr",
         "openAccessPdf",
@@ -62,10 +62,11 @@ def api_get(path, params=None, retries=3):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt < retries - 1:
-                # Rate-limited. Back off and retry.
+            if e.code in (429, 502, 503, 504) and attempt < retries - 1:
+                # Rate-limited or upstream hiccup. Back off and retry.
                 wait = (attempt + 1) * 3
-                print(f"Rate-limited, waiting {wait}s...", file=sys.stderr)
+                label = "Rate-limited" if e.code == 429 else f"Upstream {e.code}"
+                print(f"{label}, waiting {wait}s...", file=sys.stderr)
                 time.sleep(wait)
                 continue
             body = e.read().decode("utf-8", errors="replace")[:300]

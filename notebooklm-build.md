@@ -3,8 +3,11 @@ Run the full NotebookLM → Obsidian pipeline for: $ARGUMENTS
 This command is fully automated. It will:
 1. Create a NotebookLM notebook and add all research sources
 2. Run the full query set against the notebook
-3. Synthesise the responses into a structured Obsidian note
-4. Write the note directly to the vault
+3. Generate an audio overview, slide deck, and briefing doc report inside the notebook
+4. Download the briefing doc report and use it to cross-check the note synthesis
+5. Synthesise the responses into a structured Obsidian note
+6. Write the note directly to the vault
+7. Print a CliffNotes summary in chat covering only the counterintuitive, surprising, or interesting findings
 
 Requires: `notebooklm-py` v0.3.3+, Playwright Chromium, authenticated via `notebooklm login`
 
@@ -65,79 +68,93 @@ If the state file exists, skip to Step 4. Otherwise continue with notebook creat
 Write this to `nlm_setup.py` and execute it:
 
 ```python
-import time
+import asyncio
 import json
 import os
 import re
 import tempfile
 import urllib.request
-from notebooklm import NotebookLM
-
-nlm = NotebookLM()
-
-notebook_title = "$ARGUMENTS Research"
-print(f"Creating notebook: {notebook_title}")
-notebook = nlm.create_notebook(notebook_title)
-print(f"Notebook created — ID: {notebook.id}")
+from notebooklm.client import NotebookLMClient
 
 raw_urls = [
     # REPLACE WITH ACTUAL URLs FROM STEP 1 — one string per line
 ]
 
-# PubMed URLs trigger reCAPTCHA when scraped by NotebookLM.
-# Convert them to abstract text files via NCBI E-utilities instead.
 pubmed_re = re.compile(r'https?://pubmed\.ncbi\.nlm\.nih\.gov/(\d+)/?')
-sources = []
-temp_files = []
 
-for url in raw_urls:
-    m = pubmed_re.match(url.strip())
-    if m:
-        pmid = m.group(1)
-        fetch_url = (
-            f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
-            f"?db=pubmed&id={pmid}&rettype=abstract&retmode=text"
-        )
-        try:
-            with urllib.request.urlopen(fetch_url, timeout=15) as resp:
-                abstract_text = resp.read().decode("utf-8")
-            tmp = os.path.join(tempfile.gettempdir(), f"pubmed_{pmid}.txt")
-            with open(tmp, "w", encoding="utf-8") as f:
-                f.write(abstract_text)
-            sources.append(tmp)
-            temp_files.append(tmp)
-            print(f"  PMID {pmid}: abstract fetched → {tmp}")
-        except Exception as e:
-            print(f"  PMID {pmid}: fetch failed ({e}), falling back to URL")
+def fetch_pubmed_abstracts(urls):
+    sources = []
+    temp_files = []
+    for url in urls:
+        m = pubmed_re.match(url.strip())
+        if m:
+            pmid = m.group(1)
+            fetch_url = (
+                f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+                f"?db=pubmed&id={pmid}&rettype=abstract&retmode=text"
+            )
+            try:
+                with urllib.request.urlopen(fetch_url, timeout=15) as resp:
+                    abstract_text = resp.read().decode("utf-8")
+                tmp = os.path.join(tempfile.gettempdir(), f"pubmed_{pmid}.txt")
+                with open(tmp, "w", encoding="utf-8") as f:
+                    f.write(abstract_text)
+                sources.append(tmp)
+                temp_files.append(tmp)
+                print(f"  PMID {pmid}: abstract fetched -> {tmp}")
+            except Exception as e:
+                print(f"  PMID {pmid}: fetch failed ({e}), using URL")
+                sources.append(url)
+        else:
             sources.append(url)
-    else:
-        sources.append(url)
+    return sources, temp_files
 
-print(f"Adding {len(sources)} sources...")
-notebook.add_sources(sources)
 
-print("Waiting 90 seconds for source ingestion...")
-time.sleep(90)
+async def main():
+    async with await NotebookLMClient.from_storage() as nlm:
+        notebook_title = "$ARGUMENTS Research"
+        print(f"Creating notebook: {notebook_title}")
+        notebook = await nlm.notebooks.create(notebook_title)
+        notebook_id = notebook.id
+        print(f"Notebook created — ID: {notebook_id}")
 
-# Clean up temp abstract files
-for tmp in temp_files:
-    try:
-        os.remove(tmp)
-    except OSError:
-        pass
+        sources, temp_files = fetch_pubmed_abstracts(raw_urls)
 
-# Save state file so future runs skip setup
-topic_slug = "$ARGUMENTS".lower().replace(" ", "-")
-state_file = os.path.expanduser(f"~/.claude/nlm_state_{topic_slug}.json")
-os.makedirs(os.path.dirname(state_file), exist_ok=True)
-with open(state_file, "w") as f:
-    json.dump({"notebook_id": notebook.id, "sources": raw_urls}, f, indent=2)
-print(f"State saved to {state_file}")
+        print(f"Adding {len(sources)} sources...")
+        for source in sources:
+            try:
+                if os.path.isfile(source):
+                    await nlm.sources.add_file(notebook_id, source)
+                    print(f"  + file: {os.path.basename(source)}")
+                else:
+                    await nlm.sources.add_url(notebook_id, source)
+                    print(f"  + url: {source[:80]}")
+            except Exception as e:
+                print(f"  ! failed: {source[:60]} — {e}")
 
-with open("nlm_notebook_id.txt", "w") as f:
-    f.write(notebook.id)
+        print("Waiting 90 seconds for source ingestion...")
+        await asyncio.sleep(90)
 
-print("Setup complete.")
+        for tmp in temp_files:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
+        topic_slug = "$ARGUMENTS".lower().replace(" ", "-")
+        state_file = os.path.expanduser(f"~/.claude/nlm_state_{topic_slug}.json")
+        os.makedirs(os.path.dirname(state_file), exist_ok=True)
+        with open(state_file, "w") as f:
+            json.dump({"notebook_id": notebook_id, "sources": raw_urls}, f, indent=2)
+        print(f"State saved to {state_file}")
+
+        with open("nlm_notebook_id.txt", "w") as f:
+            f.write(notebook_id)
+
+        print("Setup complete.")
+
+
+asyncio.run(main())
 ```
 
 Replace the `raw_urls` list with the actual source URLs before running.
@@ -149,27 +166,11 @@ Replace the `raw_urls` list with the actual source URLs before running.
 Write this to `nlm_query.py` and execute it:
 
 ```python
-import time
+import asyncio
 import json
-import signal
-import sys
-from notebooklm import NotebookLM
+from notebooklm.client import NotebookLMClient
 
-# --- Per-query timeout handler ---
-class QueryTimeout(Exception):
-    pass
-
-def timeout_handler(signum, frame):
-    raise QueryTimeout()
-
-QUERY_TIMEOUT_SECS = 75  # kill any single query after 75 seconds
-
-nlm = NotebookLM()
-
-with open("nlm_notebook_id.txt") as f:
-    notebook_id = f.read().strip()
-
-notebook = nlm.get_notebook(notebook_id)
+CHECKPOINT_FILE = "nlm_responses.json"
 
 queries = [
     # --- Knowledge queries (Obsidian note) ---
@@ -197,9 +198,6 @@ queries = [
     "What would be the most contrarian but defensible position someone with 12 years of evidence-based coaching experience could take on $ARGUMENTS — one that goes against the current mainstream narrative in the fitness and nutrition space?",
 ]
 
-CHECKPOINT_FILE = "nlm_responses.json"
-
-# Load existing checkpoint if resuming after a crash
 try:
     with open(CHECKPOINT_FILE, encoding="utf-8") as f:
         responses = json.load(f)
@@ -207,73 +205,241 @@ try:
 except FileNotFoundError:
     responses = {}
 
-completed = 0
-skipped = 0
+with open("nlm_notebook_id.txt") as f:
+    notebook_id = f.read().strip()
 
-for i, query in enumerate(queries, 1):
-    # Skip already-completed queries (checkpoint resume)
-    if query in responses:
-        print(f"Query {i}/{len(queries)}: already done, skipping.")
-        completed += 1
-        continue
+print(f"Notebook ID: {notebook_id}")
 
-    print(f"Query {i}/{len(queries)}: {query[:70]}...")
 
-    # Set per-query timeout (Unix only — on Windows this is a no-op, rely on try/except)
-    try:
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(QUERY_TIMEOUT_SECS)
-    except (AttributeError, OSError):
-        pass  # SIGALRM not available on Windows — timeout relies on notebooklm-py's own timeout
+async def run_queries():
+    async with await NotebookLMClient.from_storage() as nlm:
+        for i, query in enumerate(queries, 1):
+            if query in responses:
+                print(f"Query {i}/{len(queries)}: already done, skipping.")
+                continue
 
-    try:
-        response = notebook.query(query)
-        responses[query] = response
-        completed += 1
-        print(f"  ✓ {len(response)} chars")
-    except QueryTimeout:
-        print(f"  ✗ Timed out after {QUERY_TIMEOUT_SECS}s — skipping")
-        responses[query] = "[TIMED OUT — re-run to retry]"
-        skipped += 1
-    except Exception as e:
-        print(f"  ✗ Error: {e}")
-        responses[query] = f"[FAILED: {e}]"
-        skipped += 1
-    finally:
-        try:
-            signal.alarm(0)  # cancel alarm
-        except (AttributeError, OSError):
-            pass
+            print(f"Query {i}/{len(queries)}: {query[:70]}...")
+            try:
+                result = await nlm.chat.ask(notebook_id, query)
+                text = result.message if hasattr(result, "message") else str(result)
+                responses[query] = text
+                print(f"  OK ({len(text)} chars)")
+            except Exception as e:
+                print(f"  ERROR: {e}")
+                responses[query] = f"[FAILED: {e}]"
 
-    # Save checkpoint after every query
-    with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
-        json.dump(responses, f, indent=2, ensure_ascii=False)
+            with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
+                json.dump(responses, f, indent=2, ensure_ascii=False)
 
-    time.sleep(4)  # brief pause between queries
+            await asyncio.sleep(4)
 
-print(f"\nDone. {completed} completed, {skipped} skipped.")
-print(f"Results saved to {CHECKPOINT_FILE}")
-if skipped > 0:
-    print(f"Re-run this script to retry timed-out queries — checkpoint will resume from where it left off.")
+    print(f"\nDone. {len(responses)} responses saved to {CHECKPOINT_FILE}")
+
+
+asyncio.run(run_queries())
 ```
 
-**Important:** On Windows, SIGALRM is unavailable. The per-query timeout relies on notebooklm-py's internal timeout. If a query hangs beyond the tool's own timeout, the script will still move on due to the exception handler. The checkpoint means any re-run picks up exactly where it stopped.
-```
-
-Wait for all 15 queries to finish before proceeding.
+Wait for all 20 queries to complete before proceeding.
 
 ---
 
-## Step 5 — Synthesise the Obsidian note
+## Step 5 — Generate audio overview, slide deck, and briefing doc report
 
-Read `nlm_responses.json`. Before writing, internally identify:
+Write this to `nlm_generate.py` and execute it with `python3 -u` (unbuffered output). The script checks for existing in-progress or completed artifacts before submitting new ones, and saves task IDs to `nlm_artifacts.json` immediately after each submission. If polling times out or fails, re-running the script resumes from `nlm_artifacts.json` without submitting duplicates.
 
-- The 3–5 most important factual claims across all responses
+```python
+import asyncio
+import json
+import os
+from pathlib import Path
+from notebooklm.client import NotebookLMClient
+from notebooklm import AudioFormat, AudioLength, SlideDeckFormat, SlideDeckLength
+from notebooklm.rpc.types import ReportFormat
+
+ARTIFACT_STATE = "nlm_artifacts.json"
+ARTIFACT_TYPE_AUDIO = 1
+ARTIFACT_TYPE_REPORT = 2
+ARTIFACT_TYPE_SLIDES = 8
+
+with open("nlm_notebook_id.txt") as f:
+    notebook_id = f.read().strip()
+
+print(f"Notebook ID: {notebook_id}", flush=True)
+
+AUDIO_INSTRUCTIONS = """
+You are presenting this research to an experienced personal trainer and evidence-based strength coach with over a decade of client experience. Frame the conversation for someone who needs to understand the evidence well enough to apply it in real sessions and explain it plainly to clients.
+
+Focus on:
+- The most counterintuitive or surprising findings from the sources — lead with what challenges conventional wisdom, not what confirms it
+- Specific numbers, effect sizes, and study names where available
+- The distinction between what the evidence actually shows versus what is commonly believed or coached
+- Practical application: what does this mean for how a coach should programme or advise clients?
+- Where genuine uncertainty remains — do not overstate the evidence
+
+Avoid generic recaps of well-known principles. Assume the listener already knows the basics. Prioritise the nuance and the edges.
+"""
+
+SLIDE_INSTRUCTIONS = """
+Create a presenter slide deck for a personal trainer or strength coach. Structure it as a reference and teaching resource on $ARGUMENTS.
+
+- Opening slide: the central finding or most important takeaway as a single bold statement
+- Evidence slides: the key studies and what they actually showed — include specific numbers
+- Practical slides: what this means for programme design and client coaching, with specific recommendations
+- Misconceptions slide: the most common wrong beliefs and what the evidence says instead
+- Closing slide: a simple decision framework or action checklist
+
+Keep bullets short — one idea per bullet. No jargon without a brief explanation. Suitable for a coach reviewing before a client consultation or presenting to a small group.
+"""
+
+REPORT_INSTRUCTIONS = """
+Focus on clinical and coaching utility. Organise the briefing document around these headings:
+1. Executive summary — five key points a coach or practitioner needs to know immediately
+2. Core mechanisms — how this works physiologically, with uncertainty flagged where it exists
+3. Evidence quality — grade the available literature (RCTs, observational, mechanistic, consensus)
+4. Practical application — specific protocols, doses, and populations where evidence is strongest
+5. Common mistakes and misconceptions — what is overstated or misunderstood in practice
+6. Monitoring and reassessment — what to track and over what timeframe
+7. Red flags and contraindications — when to refer or change approach
+8. Evidence gaps — what is genuinely unknown and should not be assumed
+
+Cite sources directly. Do not fabricate references. Use specific numbers and study names where available.
+"""
+
+
+async def main():
+    async with await NotebookLMClient.from_storage() as nlm:
+
+        # Load previously saved task IDs if resuming after a timeout
+        if os.path.exists(ARTIFACT_STATE):
+            with open(ARTIFACT_STATE) as f:
+                task_ids = json.load(f)
+            print(f"Resuming — loaded task IDs from {ARTIFACT_STATE}", flush=True)
+        else:
+            task_ids = {}
+
+        # Scan existing notebook artifacts — pick the most recent non-failed one per type
+        # to avoid submitting duplicates if the script is re-run
+        print("Scanning existing artifacts...", flush=True)
+        existing = await nlm.artifacts.list(notebook_id)
+        type_map = {
+            ARTIFACT_TYPE_AUDIO: "audio",
+            ARTIFACT_TYPE_REPORT: "report",
+            ARTIFACT_TYPE_SLIDES: "slides",
+        }
+        for art in sorted(existing, key=lambda a: a.created_at, reverse=True):
+            atype = getattr(art, "_artifact_type", None)
+            name = type_map.get(atype)
+            if name and name not in task_ids and art.status in (1, 2, 3):
+                task_ids[name] = art.id
+                print(f"  Found existing {name}: {art.id} (status={art.status})", flush=True)
+
+        # Submit only the types that are not already tracked
+        for name in ["audio", "slides", "report"]:
+            if name in task_ids:
+                print(f"  Skipping {name} — already tracked: {task_ids[name]}", flush=True)
+                continue
+            print(f"Submitting {name}...", flush=True)
+            if name == "audio":
+                result = await nlm.artifacts.generate_audio(
+                    notebook_id,
+                    instructions=AUDIO_INSTRUCTIONS,
+                    audio_format=AudioFormat.DEEP_DIVE,
+                    audio_length=AudioLength.LONG,
+                )
+            elif name == "slides":
+                result = await nlm.artifacts.generate_slide_deck(
+                    notebook_id,
+                    instructions=SLIDE_INSTRUCTIONS,
+                    slide_format=SlideDeckFormat.PRESENTER_SLIDES,
+                    slide_length=SlideDeckLength.DEFAULT,
+                )
+            elif name == "report":
+                result = await nlm.artifacts.generate_report(
+                    notebook_id,
+                    report_format=ReportFormat.BRIEFING_DOC,
+                    extra_instructions=REPORT_INSTRUCTIONS,
+                )
+            task_ids[name] = result.task_id
+            print(f"  {name} task ID: {result.task_id}", flush=True)
+            # Save immediately so a re-run won't re-submit this type
+            with open(ARTIFACT_STATE, "w") as f:
+                json.dump(task_ids, f, indent=2)
+
+        # Poll until all three are ready (up to 15 minutes)
+        todo = {k: v for k, v in task_ids.items() if v}
+        done = {}
+        print("Polling...", flush=True)
+        for i in range(45):
+            await asyncio.sleep(20)
+            for name, task_id in list(todo.items()):
+                art = await nlm.artifacts.get(notebook_id, task_id)
+                print(f"  [{(i+1)*20}s] {name}={art.status} '{art.title}'", flush=True)
+                if art.status == 3:
+                    done[name] = task_id
+                    del todo[name]
+                    print(f"    ^ ready", flush=True)
+                elif art.status == 4:
+                    done[name] = None
+                    del todo[name]
+                    print(f"    ^ FAILED", flush=True)
+            if not todo:
+                break
+        else:
+            print(f"Timed out — still pending: {list(todo.keys())}", flush=True)
+            print("Re-run this script to resume polling without re-submitting.", flush=True)
+
+        # Download report
+        if done.get("report"):
+            print("\nDownloading report as markdown...", flush=True)
+            out = await nlm.artifacts.download_report(
+                notebook_id,
+                output_path="nlm_report.md",
+                artifact_id=done["report"],
+            )
+            text = Path(out).read_text(encoding="utf-8")
+            print(f"  Saved {len(text)} chars to {out}", flush=True)
+
+        print("\nFinal artifact IDs:", flush=True)
+        for name, task_id in done.items():
+            if task_id:
+                art = await nlm.artifacts.get(notebook_id, task_id)
+                print(f"  {name}: {task_id}  title: {art.title}", flush=True)
+        print("Done.", flush=True)
+
+
+asyncio.run(main())
+```
+
+Run with:
+
+```bash
+cd "$HOME" && python3 -u nlm_generate.py 2>&1
+```
+
+If the script times out during polling, re-run the same command — it loads `nlm_artifacts.json`, skips all submissions, and resumes polling.
+
+Report the artifact IDs and titles to the user on completion.
+
+---
+
+## Step 6 — Synthesise the Obsidian note
+
+Read both `nlm_responses.json` (primary source) and `nlm_report.md` (cross-check).
+
+**How to use the two sources together:**
+- The 20 query responses are your primary material. They answer specific targeted questions and drive the section-by-section structure.
+- The briefing doc report is a full independent synthesis of the same notebook. Scan it after drafting each section and look for concrete details it surfaced that the queries did not: specific assessment tools, clinical pearls, named tests, post-surgical considerations, red flags from consensus guidelines, and evidence gaps.
+- Add those details to the relevant sections. Do not duplicate content already covered — the report is a gap-filler, not a replacement.
+
+Before writing, internally identify from both sources:
+
+- The 3–5 most important factual claims
 - The strongest evidence cited (study names, authors, effect sizes)
 - Any contradictions or tensions between responses
 - All related concepts, mechanisms, and named researchers mentioned
 - Practical protocols or specific numbers
 - Explicit caveats, limitations, and open questions
+- Any assessment tools, monitoring approaches, or red flags the report names that the queries omit
 
 Then write the complete note using this exact structure:
 
@@ -298,7 +464,7 @@ related: ["[[Related Concept 1]]", "[[Related Concept 2]]", "[[Related Concept 3
 
 ## Overview
 
-[2–3 paragraphs. What it is, why it matters, what the key claims are. Prose only — no bullets in this section. Pull the strongest signals from across all 15 responses.]
+[2–3 paragraphs. What it is, why it matters, what the key claims are. Prose only — no bullets in this section. Pull the strongest signals from across all 20 responses.]
 
 ## Mechanism
 
@@ -370,50 +536,33 @@ Formatting rules — apply throughout without exception:
 
 ---
 
-## Step 6 — Write to the Obsidian vault
+## Step 7 — Write to the Obsidian vault
 
 Determine the subfolder from the `topic/` tag:
 
 | topic/ tag | Vault path |
 |---|---|
-| nutrition | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Nutrition` |
-| training | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Training` |
-| supplementation | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Supplementation` |
-| recovery | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Recovery` |
-| body-composition | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Body Composition` |
-| health | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Health` |
-| performance | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Performance` |
-| psychology | `C:\Users\Tom\Documents\Home Vault\3 - Resources\Psychology` |
+| nutrition | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Nutrition` |
+| training | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Training` |
+| supplementation | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Supplementation` |
+| recovery | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Recovery` |
+| body-composition | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Body Composition` |
+| health | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Health` |
+| performance | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Performance` |
+| psychology | `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\Psychology` |
 
-Filename: title-case the topic, spaces to hyphens, `.md` extension. Example: `Fibremaxxing.md`
+Filename: title-case the topic, spaces to hyphens, `.md` extension. Example: `Creatine-Timing.md`
 
-Write this to `nlm_write.py` and execute it:
-
-```python
-import os
-
-folder = r"C:\Users\Tom\Documents\Home Vault\Knowledge\[Subfolder]"
-filepath = os.path.join(folder, "[Filename].md")
-
-os.makedirs(folder, exist_ok=True)
-
-note_content = """\
-[FULL NOTE CONTENT — write the complete markdown here]
-"""
-
-with open(filepath, "w", encoding="utf-8") as f:
-    f.write(note_content)
-
-print(f"✓ Written to: {filepath}")
-```
-
-After writing, confirm:
+Write the note content directly using the Write tool. After writing, confirm:
 
 ```
-✓ Note written to: C:\Users\Tom\Documents\Home Vault\Knowledge\[Subfolder]\[Filename].md
+✓ Note written to: C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[Subfolder]\[Filename].md
 ✓ Notebook: "$ARGUMENTS Research"
 ✓ Sources added: [N]
 ✓ Queries run: 20 (15 knowledge + 5 content strategy)
+✓ Audio overview: generated in notebook (artifact ID: [...])
+✓ Slide deck: generated in notebook (artifact ID: [...])
+✓ Briefing doc report: generated and used to enrich note (artifact ID: [...])
 ```
 
 Then list:
@@ -422,8 +571,29 @@ Then list:
 
 ---
 
+## Step 8 — CliffNotes summary in chat
+
+Print a short CliffNotes summary of the research directly in the chat output, under this exact heading:
+
+```
+### CliffNotes
+```
+
+Rules for the summary:
+- Bullet list only, no preamble or closing line.
+- 4 to 7 bullets. Stop when you run out of genuinely interesting material — do not pad.
+- One bullet per finding. One sentence each, two max if a number needs context.
+- **Only include things that are counterintuitive, surprising, or interesting** to an evidence-literate reader. Skip anything that would be obvious to someone who already coaches in this area.
+- Lead with the specific number, study name, or contrast where one exists. Vague claims aren't interesting.
+- No basics ("a deficit is needed for fat loss", "protein helps"). No mechanism recaps. No restatement of well-known principles.
+- Do not include section headers, links, or formatting beyond the bullets themselves.
+
+If nothing in the research clears the "interesting to an expert" bar, write a single bullet saying so honestly. Do not invent surprises.
+
+---
+
 ## Cleanup
 
 ```bash
-rm nlm_setup.py nlm_query.py nlm_write.py nlm_notebook_id.txt nlm_responses.json
+rm nlm_setup.py nlm_query.py nlm_generate.py nlm_notebook_id.txt nlm_responses.json nlm_report.md nlm_artifacts.json
 ```
