@@ -388,7 +388,7 @@ async def main():
             print(f"Timed out — still pending: {list(todo.keys())}", flush=True)
             print("Re-run this script to resume polling without re-submitting.", flush=True)
 
-        # Download report
+        # Download report to temp file for note enrichment — deleted in cleanup
         if done.get("report"):
             print("\nDownloading report as markdown...", flush=True)
             out = await nlm.artifacts.download_report(
@@ -562,7 +562,7 @@ Write the note content directly using the Write tool. After writing, confirm:
 ✓ Queries run: 20 (15 knowledge + 5 content strategy)
 ✓ Audio overview: generated in notebook (artifact ID: [...])
 ✓ Slide deck: generated in notebook (artifact ID: [...])
-✓ Briefing doc report: generated and used to enrich note (artifact ID: [...])
+✓ Briefing doc report: generated in notebook (artifact ID: [...])
 ```
 
 Then list:

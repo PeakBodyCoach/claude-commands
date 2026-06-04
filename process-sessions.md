@@ -156,17 +156,31 @@ If `[Client Name] - Bookings.md` exists:
 2. Prepend a row to the History table: `| YYYY-MM-DD | HH:MM | regular/flexible | (notes) |`.
 3. Skip silently if file doesn't exist.
 
-#### 2h. Append tasks to tasks.md
+#### 2h. Reconcile tasks in tasks.md (close, then open)
 
-For each item in `tasks`, append a line under `## [Client Name]` heading in `tasks.md`:
+`tasks.md` is the single source of truth for open tasks. This step both **closes** tasks the session shows are done and **appends** new ones. Format spec lives in `/reconcile-tasks`.
+
+**First, close completed tasks.** Scan the combined Live Notes + Voice Notes for completion signals — "done", "fixed", "added X to OneFit", "updated the programme", "sorted", "credited" — and the `program_changes` you extracted. For each open `- [ ]` under `## [Client Name]` that this session clearly completes:
+
+1. Change `- [ ]` to `- [x]` and append ` ✅ [today's date]`.
+2. Move the line out of tasks.md into `$VAULT_PATH/2 - Business/Operations/tasks-archive.md` under a `## [Client Name]` heading (create if absent), with a trailing `<!-- reason: closed by session YYYY-MM-DD -->`.
+
+Only close on clear evidence. When unsure, leave the task open — `/reconcile-tasks` will catch it later.
+
+**Then, append new tasks.** For each item in `tasks`, append a line under `## [Client Name]`. Every line must end with `#task` (the Tasks plugin global filter — without it the dashboards don't see it):
 
 ```
-- [ ] [task description] ([today's date])
+- [ ] [task description] (raised: [today's date]) #task
 ```
 
-If the section exists, insert directly below the heading (most recent first). If the section doesn't exist, create it at the bottom of the file.
+**Assignee tagging** (three states — see `/reconcile-tasks` for the full model):
+- If the task is explicitly for Khaela (flagged in the Khaela report, or "Khaela to..."), tag `#person/khaela`.
+- If it is clearly Tom-only (coaching call, client message, writing a programme, technique investigation, billing), tag `#person/tom` so it stays off Khaela's board.
+- Otherwise leave it **unassigned** (no tag) — it shows on Khaela's board as available, and gets sorted later. Default to unassigned when unsure.
 
-Don't duplicate tasks that already appear word-for-word in the section.
+Example: `- [ ] [task] #person/khaela (raised: [today's date]) #task`
+
+If the section exists, insert directly below the heading (most recent first). If it doesn't exist, create it at the bottom of the file. Don't duplicate tasks that already appear word-for-word in the section (open or already-archived this run).
 
 #### 2i. Archive the file
 

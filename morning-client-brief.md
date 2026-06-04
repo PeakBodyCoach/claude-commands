@@ -84,7 +84,7 @@ Open `[Client Name] - Session Log.md`. Walk the `### ` entries under `## Session
 - `flagged_body_parts` + `recurring_themes` (combined as "Watch:")
 - Any bullet line mentioning "next time", "next session", or things to watch for
 
-Also open `tasks.md` and collect all `- [ ]` lines under `## [Client Name]` (open tasks only — ignore `- [x]`).
+Also open `tasks.md` and collect all `- [ ]` lines under `## [Client Name]` (open tasks only — ignore `- [x]`). Strip the trailing metadata when rendering: drop the `#task` tag, the `#person/...` tag, and the `(raised: ...)` note, keeping just the task text (and a `📅 date` if present). Keep `#person/khaela` visible only if you want to show it's Khaela's.
 
 Format:
 
