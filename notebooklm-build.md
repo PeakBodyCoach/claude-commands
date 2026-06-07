@@ -424,12 +424,13 @@ Report the artifact IDs and titles to the user on completion.
 
 ## Step 6 — Synthesise the Obsidian note
 
-Read both `nlm_responses.json` (primary source) and `nlm_report.md` (cross-check).
+Read both `nlm_responses.json` and `nlm_report.md` as **co-equal primary sources**. The vault note must incorporate the full detail from both. Do not treat the report as a gap-filler — it is often the richer document and frequently contains structured tables, specific effect sizes, named studies, population-specific sub-analyses, and failure-point mechanics that the query responses do not surface in the same detail.
 
 **How to use the two sources together:**
-- The 20 query responses are your primary material. They answer specific targeted questions and drive the section-by-section structure.
-- The briefing doc report is a full independent synthesis of the same notebook. Scan it after drafting each section and look for concrete details it surfaced that the queries did not: specific assessment tools, clinical pearls, named tests, post-surgical considerations, red flags from consensus guidelines, and evidence gaps.
-- Add those details to the relevant sections. Do not duplicate content already covered — the report is a gap-filler, not a replacement.
+- Read the full report first. Note every specific number, table row, named study, population sub-group, and failure-point it contains.
+- Then read all 20 query responses. Note what they add that the report does not cover (typically nuance, counterarguments, practitioner framing).
+- Write the vault note using both. Every specific number, effect size, named trial, and structured table from the report must appear in the vault note. Every counterintuitive finding, caveat, or practical framing from the queries must appear too.
+- The vault note should be at least as detailed as the report, and more so where the queries add depth.
 
 Before writing, internally identify from both sources:
 

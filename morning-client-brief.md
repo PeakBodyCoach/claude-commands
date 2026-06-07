@@ -50,6 +50,19 @@ Path: `$VAULT_PATH/2 - Business/Clients/_inbox/`. Create it if it doesn't exist.
 
 **Idempotency**: if the file already exists, skip it and report `skipped (exists)`. Do not overwrite — Tom may already have edited it.
 
+**Section order in every generated file:**
+1. Header
+2. Watch strip (if any flags exist)
+3. Today's Plan
+4. Immediate Tasks (if any open tasks exist)
+5. Live Notes
+6. `---`
+7. From Last Session
+8. Client Context
+9. Voice Notes
+
+The file is designed for a single readable glance at the top (Watch + programme), then live editing (Live Notes), then reference detail below the fold.
+
 **Build the file from these sources:**
 
 #### Header block
@@ -64,55 +77,19 @@ For the cycle line:
 - Else if the most recent Session Log entry contains a clear week marker: use that
 - Else: omit the line entirely
 
-#### Client Context
+#### Watch strip
 
-Open `[Client Name] - Profile.md`. Build a 3-4 line glance strip. Pull:
-- Primary goal (from Goals section, one line)
-- Current training strategy or focus (one line)
-- Any injury / health flag (one line, only if present)
-- Technique watchpoints (one line, only if present)
+Immediately after the header, output a compact blockquote with the flags Tom needs before coaching starts. Pull from:
+- Injury / health flags and technique watchpoints in `[Client Name] - Profile.md`
+- `flagged_body_parts` + `recurring_themes` from the most recent Session Log entry
 
-Format as bullets under `## Client Context`. Keep this terse — if the profile has lots of detail, summarise. Tom can tap into the full profile if needed.
-
-If profile is empty or missing: `**No client profile on file.**`
-
-#### From Last Session
-
-Open `[Client Name] - Session Log.md`. Walk the `### ` entries under `## Session Log` from newest down. Pick the **most recent completed session** — an entry with an `exercises:` field present (skip cancellations, no-shows, and pre-session notes entries that lack that field). Extract:
-- The date from the entry heading
-- `program_changes` field (verbatim if present)
-- `flagged_body_parts` + `recurring_themes` (combined as "Watch:")
-- Any bullet line mentioning "next time", "next session", or things to watch for
-
-Also open `tasks.md` and collect all `- [ ]` lines under `## [Client Name]` (open tasks only — ignore `- [x]`). Strip the trailing metadata when rendering: drop the `#task` tag, the `#person/...` tag, and the `(raised: ...)` note, keeping just the task text (and a `📅 date` if present). Keep `#person/khaela` visible only if you want to show it's Khaela's.
-
-Format:
+Format as a single blockquote, semicolon-separated, max 3 items. Keep it to one line where possible:
 
 ```
-## From Last Session
-**Date:** [last session date]
-**Pending changes:** [program_changes, or "None"]
-**Watch:** [flagged + themes, or "Nothing flagged"]
-**Notes for today:** [next-time notes from bullets, omit line if none]
-**Open tasks:**
-- [ ] [task 1]
-- [ ] [task 2]
+> **Watch:** [flag 1]; [flag 2]; [flag 3 if needed]
 ```
 
-Omit the Open tasks heading entirely if there are none. If no Session Log heading exists or it's empty: `**No prior session data.**`
-
-#### Live Notes section (static prompts)
-
-Live Notes goes BEFORE Today's Plan so the editable section is high in the file and easy to reach on mobile without scrolling past the programme.
-
-```
-## Live Notes
-**Changes made:** 
-**Form notes:** 
-**Tasks / follow-ups:** 
-**For next session:** 
-**Khaela report:** 
-```
+If nothing is flagged from either source, omit the Watch strip entirely.
 
 #### Today's Plan
 
@@ -156,6 +133,71 @@ For **single-workout cycles** (no sub-headings — just exercises directly under
 Only render today's specific workout. Do NOT include the other workouts — Tom can tap into Programmes.md if he needs them.
 
 If Programmes.md is missing, empty, or has no active cycle: `**No programme on file.**`
+
+#### Immediate Tasks
+
+Open `tasks.md` and collect all `- [ ]` lines under `## [Client Name]` (open tasks only). Strip trailing metadata: drop `#task`, `#person/...` tags, and `(raised: ...)` notes, keeping just the task text (and a `📅 date` if present).
+
+If any open tasks exist, output:
+
+```
+## Immediate Tasks
+- [ ] [task 1]
+- [ ] [task 2]
+```
+
+Omit the section entirely if there are no open tasks.
+
+#### Live Notes section (static prompts)
+
+```
+## Live Notes
+**Changes made:** 
+**Form notes:** 
+**Tasks / follow-ups:** 
+**For next session:** 
+**Khaela report:** 
+```
+
+#### Separator
+
+Output a horizontal rule to mark the end of the at-a-glance section and the start of reference detail:
+
+```
+---
+```
+
+#### From Last Session
+
+Open `[Client Name] - Session Log.md`. Walk the `### ` entries under `## Session Log` from newest down. Pick the **most recent completed session** — an entry with an `exercises:` field present (skip cancellations, no-shows, and pre-session notes entries that lack that field). Extract:
+- The date from the entry heading
+- `program_changes` field (verbatim if present)
+- `flagged_body_parts` + `recurring_themes` (combined as "Watch:")
+- Any bullet line mentioning "next time", "next session", or things to watch for
+
+Format:
+
+```
+## From Last Session
+**Date:** [last session date]
+**Pending changes:** [program_changes, or "None"]
+**Watch:** [flagged + themes, or "Nothing flagged"]
+**Notes for today:** [next-time notes from bullets, omit line if none]
+```
+
+If no Session Log heading exists or it's empty: `**No prior session data.**`
+
+#### Client Context
+
+Open `[Client Name] - Profile.md`. Build a 3-4 line glance strip. Pull:
+- Primary goal (from Goals section, one line)
+- Current training strategy or focus (one line)
+- Any injury / health flag (one line, only if present)
+- Technique watchpoints (one line, only if present)
+
+Format as bullets under `## Client Context`. Keep this terse — if the profile has lots of detail, summarise. Tom can tap into the full profile if needed.
+
+If profile is empty or missing: `**No client profile on file.**`
 
 #### Voice Notes section (static placeholder)
 
