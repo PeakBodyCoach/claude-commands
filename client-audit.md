@@ -1,10 +1,12 @@
 ---
-description: Step-by-step audit for one active PT client. Phase 1 silently normalises folder mechanics (filenames, CSV pointers, stale banners, Session Log extraction, YAML-format profile migration). Phase 2 walks Tom through content gaps one question at a time (programme currency, nutrition plan or opt-out, check-ins or opt-out, header bar fills, stale sections). Use whenever Tom says "audit [client]", "check [client]'s folder", "is [client] up to date", "review [client]'s setup", or any variant on confirming a single client is fully filled in.
+description: Step-by-step audit for one active PT client against the 121 service standard. Phase 1 silently normalises folder mechanics (filenames, CSV pointers, stale banners, Session Log extraction, YAML-format profile migration). Phase 2 walks Tom through content gaps one question at a time, enforcing "current to standard" not just "file exists": programme currency + 6-week backstop + homework/rationale, nutrition plan-around-the-number + behavioural anchor, the behaviour-change engine chain (check-ins read-back + habits + monitoring dashboard), the onboarding gate, and the comms proxy. Use whenever Tom says "audit [client]", "check [client]'s folder", "is [client] up to date", "review [client]'s setup", or any variant on confirming a single client is fully filled in and delivered to standard.
 ---
 
 # Client Audit
 
-End-to-end audit and walkthrough for a single active PT client. Reads the client's folder against the Andrew Rhodes canonical pattern, normalises mechanical drift in one batch, then walks Tom through content gaps with fix-now / mark-opt-out / skip choices.
+End-to-end audit and walkthrough for a single active PT client. Reads the client's folder against the Andrew Rhodes canonical pattern AND the 121 service standard, normalises mechanical drift in one batch, then walks Tom through content gaps with fix-now / mark-opt-out / skip choices.
+
+This audit enforces two layers. The **documentation standard** (which files exist, canonical shape) is Phase 1 plus the header/section checks. The **service standard** (is the client actually delivered to the locked 121 scope) is the sharpened Phase 2: the 6-week programme backstop, nutrition as a plan-around-the-number with a behavioural anchor, the linked behaviour-change engine, the onboarding gate, and the comms rhythm. The standard is defined in `1 - Projects/Delivery Model & Online Offer/121 Personal - Delivery Scope.md` and its four cluster deliverable docs. The audit moves a check from "the file exists" to "the file is current to standard".
 
 ## Inputs
 
@@ -54,6 +56,19 @@ Optional third line for an active banner (only when meaningful):
 - `### Training Strategy`
 - `### Nutrition Strategy`
 - `### Monitoring & Accountability`
+
+**The Monitoring & Accountability section is the engine dashboard.** Under the service standard it is no longer a free-text note, it must carry four populated fields plus a review date, no blanks:
+
+```markdown
+### Monitoring & Accountability
+- Metrics tracked: [weight cadence, performance, habits; photos only if the client opted in]
+- Named failure point: [the one from the Nutrition Plan, e.g. late-night snacking]
+- Current habit(s): [1-2 max, the one(s) addressing the failure point]
+- Accountability mechanism: [how Tom holds them to it]
+- Next progress review: [YYYY-MM-DD, within the future 6-week window]
+```
+
+This is checked as a linked chain in Q5, not as five independent fields.
 
 **Optional sections preserved as-is (do not delete if present):**
 - `### Injuries & Health`
@@ -105,6 +120,7 @@ Detect every mechanical drift up front. Present as a numbered diff. Wait for a s
 | Status banner mentions a past date and CSV status is active (e.g. "PAUSED, expected back week of 20 Apr" when today is past that and CSV is active) | Remove the banner. If Tom wants a fresh banner he'll add in Phase 2. |
 | No `## [Full Name]` heading in `Operations/tasks.md` | Insert in alphabetical order with an empty body |
 | Profile has any duplicate heading or malformed section ordering | Fix |
+| `[Name] - Bookings.md` Upcoming table holds a row whose date is in the past AND that date already has a Session Log entry (the session happened) | Move it from Upcoming to the top of the History table (carry any note across). Leaves Upcoming reflecting only genuinely-future sessions, so Q9 reads true |
 
 **Output format:**
 
@@ -149,42 +165,89 @@ If a section is filled but its content references a stale goal or phase that con
 
 Don't rewrite sections wholesale, ask Tom for the new content (free text or bullet dictation), then write.
 
-### Q3 — Programme currency
+### Q3 — Programme currency and standard
 
-Read `[Name] - Programmes.md`. Check:
-- Latest cycle's date.
-- Whether it's marked superseded.
-- Whether a current cycle exists.
+Read `[Name] - Programmes.md`. The standard is now testable, not "a sensible window". Inspect the active (top, non-superseded) cycle for three things:
 
-Cases:
-- **Current cycle exists, dated within a sensible window for their phase**: PASS, mention the cycle name briefly.
-- **Latest cycle is marked superseded with no replacement**: ask "Write a new cycle now, add a task to tasks.md, or note client is between programmes?"
-- **No cycles at all (just the scaffold stub)**: same three choices.
-
-### Q4 — Nutrition Plan
+1. **Currency** — within the **6-week backstop**. Any cycle is owed a review by 6 weeks even if progressing, so nothing goes stale silently. Past 6 weeks from the cycle's start date = stale.
+2. **`**For you:**` line** — the one-line client-facing rationale for the cycle is present.
+3. **`### Homework / Mobility` block** — present in the active cycle. Homework is standard for every client, with a floor of mobility/stretching.
 
 Cases:
-- **File exists**: read the `created:` frontmatter or filename date. If within 8 weeks and the goal/weight in the plan matches Profile: PASS. If stale: ask "Re-run /macro-planner now, defer, or confirm still current?"
-- **File missing AND no `### Nutrition Plan: opt-out` section in Profile**:
+- **Current cycle, within 6 weeks, both elements present**: PASS, name the cycle.
+- **Current cycle but past the 6-week backstop**: ask "Write a new cycle now (/write-programme), add a task to tasks.md, or note client is between programmes?"
+- **Cycle present but missing the `**For you:**` line and/or the `### Homework / Mobility` block**: flag the specific missing element. Offer to add it now (Tom dictates the rationale / homework) or defer as a task. Legacy cycles predate these, so expect to backfill.
+- **Latest cycle superseded with no replacement, or no cycles at all (scaffold stub)**: ask "Write a new cycle now, add a task, or note between programmes?"
+
+> [!note] Producing-skill dependency
+> The `**For you:**` line and `### Homework / Mobility` block are emitted going forward by an updated `/write-programme` (build step 4). Until that lands, the audit flags their absence as a backfill gap, not a fault.
+
+### Q4 — Nutrition plan and standard
+
+The standard moved from "file exists" to "a plan around the number, with a named behavioural anchor". A bare macro target no longer passes (it's the exact thing that already failed these clients).
+
+Cases:
+- **Plan file exists**: check three things.
+  1. **Built around the number** — more than macro targets alone: a structured approach, either a bespoke meal plan OR a deliberately-chosen flexible-tracking framework agreed with the client. Targets-only does NOT meet standard, flag it.
+  2. **Named behavioural anchor** — one named failure point (late-night snacking, weekend drinking, etc.) plus one concrete strategy for it. This is the origin of the behaviour-change engine, re-checked in Q5. Missing = flag.
+  3. **Currency** — within the **8-week backstop**, with the plan's goal/weight matching Profile. Stale = ask "Re-run /macro-planner now, defer, or confirm still current?"
+- **File missing AND `### Nutrition Plan: opt-out` section present**: PASS. The opt-out is a positive recorded marker, not a gap. Mention the reason and date so Tom can confirm still valid.
+- **File missing AND no opt-out section**:
   - Fix now → invoke `/macro-planner` inline.
   - Mark opt-out → prompt for reason, write the opt-out section to Profile with today's date.
   - Skip → record in skip list, take no action.
-- **File missing AND opt-out section present**: PASS, mention the recorded reason and date so Tom can confirm still valid.
 
-### Q5 — Check-ins
+### Q5 — Behaviour-change engine (check-ins + habits + monitoring)
 
-Same structure as Q4.
+The heart of the new standard. Check-ins, habits and Monitoring are **one linked engine, not three independent ticks**. Verify the **chain** and flag the specific broken link, don't tick the boxes separately.
+
+The chain: **named failure point (from the Q4 nutrition plan) → an assigned habit addressing it → the check-in loop reviewing it weekly with a read-back → the Monitoring dashboard recording the whole state.**
+
+Check, in order:
+1. **Failure point** — the named failure point from the Nutrition Plan (Q4) is mirrored in the Profile Monitoring & Accountability section.
+2. **Habit** — at least one active habit (assigned via `/habit-sync`, lives in 1Fit) addresses that failure point, recorded in M&A. Hard cap 1-2 habits, never a checklist.
+3. **Check-in loop** — `[Name] - Check-ins.md` most recent entry is within the last **7 days** AND carries a `Read-back sent` marker. Tom's response is the active ingredient; a logged weight with no read-back is the exact version the evidence finds useless. Or a recorded `### Check-ins: opt-out` exists (then this link is a PASS).
+4. **Monitoring dashboard** — the M&A section has all four fields populated with no blanks (metrics tracked, current habit(s), named failure point, accountability mechanism), plus a **next progress review date**.
+5. **Progress review currency** — the next progress review date is within the future 6-week window, or past and due (flag as due).
+6. **WIA consistency** — if the metrics field prescribes high-frequency weighing (daily, or near-daily) but the WIA screen reads `Not yet screened`, flag it. Frequency must be set *after* the screen, not before. Offer to run the one-question screen now (Domain 6 of the Onboarding Intake SOP) or drop the frequency to a safe default until screened.
 
 Cases:
-- **File exists with entries in last 4 weeks**: PASS.
-- **File exists but stale**: ask "Add an entry now, defer, or confirm still on track?"
-- **File missing AND no `### Check-ins: opt-out` section in Profile**:
-  - Fix now → create `[Name] - Check-ins.md` with a starter entry template (date header, blank body, ready for Tom to fill).
-  - Mark opt-out → prompt for reason, write opt-out section to Profile.
-  - Skip.
-- **File missing AND opt-out section present**: PASS, mention the recorded reason.
+- **Whole chain intact**: PASS, state plainly that the engine is running.
+- **Any link broken**: flag the **specific** link, e.g. "habit assigned but no read-back on the check-in in 12 days" or "M&A failure point blank while the nutrition plan names weekend drinking". Offer to fix that link now, defer it as a task, or (for the check-in link only) mark opt-out.
+- **Check-ins file missing AND no opt-out**: fix now → create `[Name] - Check-ins.md` from `Clients/_Templates/Check-ins Template.md` (replace `{{Full Name}}`) / mark opt-out → prompt reason, write to Profile / skip.
+- **Check-ins file exists in a pre-standard format** (e.g. a bare weight table, or entries with no `Read-back sent` field — most legacy clients): offer to **migrate it to the new template**. Preserve every existing entry (carry weight and any notes across), reformat to the standard fields (Weight / Adherence / Struggle / Flag / Read-back sent / Notes), add the prompt + read-back-shape header block from the template, and set `Read-back sent:` on historical entries to `unknown (pre-standard)` rather than back-dating a claim. Newest stays on top.
 
-### Q6 — Session Log recency
+> [!note] Producing-skill dependency
+> `read-back sent` markers come from the updated check-in workflow, the M&A dashboard fields from the new Profile template (build steps 2 and 5-7). Legacy clients will show most of this chain empty. That is the gap the roster run closes, present it as backfill, not failure.
+
+### Q6 — Onboarding gate
+
+Only fully meaningful for clients within or just past the onboarding window. Determine the window from `Started` (header bar) and session count: **3 sessions or 2 weeks from start, whichever comes first.**
+
+- **Client well past the window** (established): treat as a catch-up check. Verify the five conditions and surface any specific gaps as a task. Don't re-run onboarding.
+- **Client inside the window**: verify the five conditions, flag what's still open.
+
+The five completion conditions:
+1. All five Profile sections filled (real content, not placeholder).
+2. Nutrition intake done, no "pending".
+3. Baseline metrics captured (weight, key measurements). Progress photos are opt-in only and not part of this baseline, never flag their absence.
+4. First habit assigned.
+5. WIA screen recorded (weight-related information avoidance, screened before any monitoring frequency is prescribed).
+
+Surface **specific** missing fields, never a bare "onboarding incomplete".
+
+### Q7 — Comms proxy
+
+Light, mostly informational. The comms standard is a proactive rhythm (session recap + check-in read-back), so the auditable proxy is whether those two touchpoints are firing.
+
+Check:
+- The most recent Session Log entry carries a `recap_sent` marker.
+- The most recent Check-ins entry carries a `read-back sent` marker (also surfaced in Q5).
+
+- **Both present**: PASS, proactive rhythm running.
+- **Missing**: flag as a gap. These markers are emitted by updated `/process-sessions` (recap) and the check-in loop (read-back), build steps 4-5. Legacy entries predate them, so this is backfill.
+
+### Q8 — Session Log recency
 
 Inspect last entry in `[Name] - Session Log.md`.
 
@@ -193,7 +256,7 @@ Inspect last entry in `[Name] - Session Log.md`.
 
 No action enforced. Information only.
 
-### Q7 — Bookings
+### Q9 — Bookings
 
 Inspect `[Name] - Bookings.md` Upcoming table.
 
@@ -213,6 +276,14 @@ Phase 1 (mechanical):
 - [bullet list of fixes applied, or "no drift detected"]
 
 Phase 2 (content):
+
+Service standard:
+- Programme: [pass / past 6-week backstop / missing For-you line / missing homework block]
+- Nutrition: [pass / opt-out / targets-only no plan / no behavioural anchor / stale]
+- Behaviour-change engine: [intact / broken link: which one]
+- Onboarding gate: [complete / specific gaps]
+- Comms rhythm: [running / recap or read-back markers missing]
+
 Filled now:
 - [list]
 
@@ -243,3 +314,5 @@ End by reminding Tom of any genuinely-open items he should circle back on (e.g. 
 - **Preserve non-canonical Client Profile sections**. They hold real client-specific information; don't flatten them to canon.
 - **One question at a time in Phase 2**. Don't combine Q3 and Q4 into a single ask. Wait for Tom's answer before moving on.
 - **Don't rewrite the Profile from scratch** when filling a section. Use Edit to insert or replace only the affected section, preserve everything else.
+- **Treat the behaviour-change engine as one linked chain** (Q5), not four independent ticks. Flag the specific broken link, not a generic "monitoring incomplete".
+- **Absent service-standard markers on legacy clients are backfill gaps, not failures.** `recap_sent`, `read-back sent`, the `**For you:**` line, the `### Homework / Mobility` block and the M&A dashboard fields are emitted by producing skills updated in later build steps. Present their absence as "to backfill", framed the same as any fix-now / defer / opt-out gap, never as the client failing.

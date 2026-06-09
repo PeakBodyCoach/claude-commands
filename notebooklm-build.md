@@ -6,8 +6,8 @@ This command is fully automated. It will:
 3. Generate an audio overview, slide deck, and briefing doc report inside the notebook
 4. Download the briefing doc report and use it to cross-check the note synthesis
 5. Synthesise the responses into a structured Obsidian note
-6. Write the note directly to the vault
-7. Print a CliffNotes summary in chat covering only the counterintuitive, surprising, or interesting findings
+6. Write the note directly to the vault, with a CliffNotes callout pinned at the top
+7. Print the same CliffNotes summary in chat covering only the counterintuitive, surprising, or interesting findings
 
 Requires: `notebooklm-py` v0.3.3+, Playwright Chromium, authenticated via `notebooklm login`
 
@@ -463,6 +463,11 @@ related: ["[[Related Concept 1]]", "[[Related Concept 2]]", "[[Related Concept 3
 
 > [One-sentence bottom line. Blunt and practical.]
 
+> [!note]- CliffNotes
+> [The same 4 to 7 bullets produced for Step 8, pinned here at the top of the note. Counterintuitive, surprising, or interesting findings only. Lead with the specific number, study name, or contrast. One sentence per bullet, two max if a number needs context. No basics, no mechanism recaps. Generate the bullets once and reuse the identical set in the Step 8 chat summary.]
+> - [finding]
+> - [finding]
+
 ## Overview
 
 [2–3 paragraphs. What it is, why it matters, what the key claims are. Prose only — no bullets in this section. Pull the strongest signals from across all 20 responses.]
@@ -579,6 +584,8 @@ Print a short CliffNotes summary of the research directly in the chat output, un
 ```
 ### CliffNotes
 ```
+
+This is the **same set of bullets** pinned in the `> [!note]- CliffNotes` callout at the top of the vault note (Step 6). Generate the bullets once, use the identical set in both places. Do not write a different summary for each.
 
 Rules for the summary:
 - Bullet list only, no preamble or closing line.

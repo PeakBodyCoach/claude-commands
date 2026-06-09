@@ -1,5 +1,5 @@
 ---
-description: Onboard a new client end-to-end — scaffolds the vault folder, profile file (Personal Info, Goals, Training Strategy, Nutrition Strategy, Monitoring & Accountability), Programmes.md stub, Nutrition Plan (via macro-planner or stub), clients.csv row, and tasks.md section from intake form responses or conversation. Replaces import-client. Use when Tom says "add a new client", "onboard [name]", "set up [name]", or pastes intake notes.
+description: Onboard a new client end-to-end — scaffolds the vault folder, Profile file (instantiated from the canonical Profile Template, all five Client Profile sections present with embedded intake prompts + the Monitoring & Accountability dashboard + the onboarding-gate checklist), separate Session Log, Programmes stub, Nutrition Plan (via macro-planner or stub), clients.csv row, and tasks.md section from intake form responses or conversation. Replaces import-client. Use when Tom says "add a new client", "onboard [name]", "set up [name]", or pastes intake notes.
 ---
 
 # New Client
@@ -70,59 +70,32 @@ If any roster row required fields are missing, collect before writing.
 
 ---
 
-## Step 2 — Create the folder and profile file
+## Step 2 — Create the folder and Profile from the template
 
-**Path**: `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\[Full Name].md`
+**Profile path**: `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\[Full Name] - Profile.md`
+
+Instantiate the canonical template at `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\_Templates\Profile Template.md`: read it, replace every `{{token}}`, and fill each section from the intake responses. **Do not invent the structure inline, copy the template's structure exactly** so every new client starts identical to canon.
+
+The intake-form → Profile-section mapping is the table in Step 1. Specifics:
+- **Header bar** — fill Type, Cadence, Rate, Email, Phone, Birthday, Started, 1Fit ID. TBC anything genuinely unknown, never drop a field.
+- **All five Client Profile sections stay present** (Personal Info, Goals, Training Strategy, Nutrition Strategy, Monitoring & Accountability), plus Injuries & Health. Where intake covers a section, replace the prompts with real bullets. Where it doesn't, **leave the embedded prompts in place** so the gap is visibly empty, never omit the section. This is the opposite of the old "omit empty sections" rule, and it's deliberate: the new standard wants gaps surfaced, not hidden.
+- **Onboarding gate callout** — keep it; tick any of the five conditions already met at intake.
+- **Monitoring & Accountability dashboard** — set `Metrics tracked` and `Accountability` from the tracking + check-in answers; leave `Named failure point` and `Current habit(s)` as the blank placeholders until nutrition intake and the first habit are done; set `WIA screen` to "Not yet screened" unless intake covered it. If intake says No to both nutrition tracking and weekly check-in, set Accountability to "Light touch, coaching during sessions only, no formal tracking or check-ins requested at intake" but keep all dashboard fields present.
+- Prefer terse single bullets (e.g. "Female, 42, moderately active.") over paragraphs.
+
+**Also create a separate, empty Session Log** at `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\[Full Name] - Session Log.md` (the Profile no longer carries an embedded log):
 
 ```markdown
-# [Full Name]
+# Session Log — [Full Name]
 
-**Status**: Client | **Type**: [Personal/Online/Hybrid] | **Cadence**: [Nx/week, preferred times if known] | **Rate**: £[rate]/session
-**Email**: [email] | **Phone**: [phone] | **Birthday**: [DoB if given, friendly format e.g. "16 July"] | **Started**: [start date, friendly format]
-
-## Client Profile
-
-### Personal Info
-[bullet points — sex/age, occupation, schedule constraints, lifestyle context, preferred session times, anything from Lifestyle Commitments]
-
-### Injuries & Health
-[bullet points — injuries, health conditions, physical limitations. Omit section if nothing known.]
-
-### Goals
-[bullet points — selected Training Priorities, free-text goal description, target metrics where given]
-
-### Time Frames
-[bullet points — only if intake provided a time frame. Otherwise omit.]
-
-### Training Strategy
-[bullet points — initial approach, exercise preferences (include/avoid), training priorities. Omit section if nothing known yet.]
-
-### Nutrition Strategy
-[bullet points — nutrition priority (lose/gain/maintain/none), tracking preference, initial direction. Omit if "not a priority" with no other detail.]
-
-### Monitoring & Accountability
-[bullet points — built from intake responses:
-- Nutrition tracking: Yes/No (and how, if specified)
-- Weekly accountability check-in: Yes/No
-- Preferred motivators (from "What motivates you most")
-- Preferred accountability methods (from "How can we best keep you accountable")
-- Default cadence if Tom doesn't specify: hands-on technique coaching during sessions, weekly informal check-in via WhatsApp]
-
-## Session Log
-
-<!-- New session entries are inserted directly below this heading -->
+<!-- Newest entries on top. New entries are inserted directly below this line. -->
 ```
-
-**Rules for filling sections:**
-- Omit any section that has no content. Don't write empty headings or "TBC" placeholders inside sections — the section absence itself is the signal.
-- For Personal Info, prefer terse single bullets (e.g. "Female, 42, moderately active.") to long paragraphs.
-- For Monitoring & Accountability, if intake says No to both nutrition tracking and weekly check-in, write a single line: "Light touch — coaching during sessions only, no formal tracking or check-ins requested at intake."
 
 ---
 
-## Step 3 — Create Programmes.md stub
+## Step 3 — Create Programmes stub
 
-**Path**: `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\Programmes.md`
+**Path**: `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\[Full Name] - Programmes.md`
 
 ```markdown
 ---
@@ -140,7 +113,7 @@ Per-cycle training programmes. Newest at top.
 
 **Focus:** TBD
 
-*Programme to be written.*
+*Programme to be written. When written via `/write-programme`, the active cycle must carry the `**For you:**` rationale line and a `### Homework / Mobility` block per `Clients/CLAUDE.md`.*
 ```
 
 ---
@@ -192,12 +165,12 @@ Gather the missing fields above, then re-run `/macro-planner` for [Full Name]. T
 Append one row to `C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\clients.csv`:
 
 ```
-[Full Name],[email],[phone],[start_date],[end_date],[rate],[sessions_per_week],[status],[segment],[Full Name]/[Full Name].md
+[Full Name],[email],[phone],[start_date],[end_date],[rate],[sessions_per_week],[status],[segment],[Full Name]/[Full Name] - Profile.md
 ```
 
 - `end_date`: leave empty
 - `status`: `active`
-- `notes_file`: `[Full Name]/[Full Name].md`
+- `notes_file`: `[Full Name]/[Full Name] - Profile.md`
 
 Verify the name doesn't already exist in clients.csv before appending.
 
