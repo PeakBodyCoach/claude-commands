@@ -148,13 +148,13 @@ If the script exits non-zero, print the script's stderr and stop. Common causes:
 
 ### Cadence (default scheduled push)
 
-Blog cadence is one post per week on Mondays. Slot computation lives in `~/.claude/skills/content-schedule/cadence.py` (shared with `/content-schedule`). The publisher fetches:
+Blog cadence is two posts per week, Mondays and Thursdays (Q3 2026, locked 2026-06-10: Mondays carry the legacy queue through September, Thursdays fill with new production). Slot computation lives in `~/.claude/skills/content-schedule/cadence.py` (shared with `/content-schedule`). The publisher fetches:
 
 - WP posts with `status=future` (any scheduled future post)
 - WP posts with `status=publish` and `post_date >= today - 14 days`
 - Vault drafts under `Blog/` with `scheduled_date >= today` in frontmatter
 
-It unions these into a "taken" set, then picks the first Monday on or after `max(today, last-taken + 7d)` that isn't itself in the set. If the article being pushed already has `scheduled_date` in its frontmatter (because `/content-schedule` was run upstream), that date is the default instead of a fresh computation.
+It unions these into a "taken" set, then picks the **earliest free posting day** on or after today that isn't in the set (gap-fill: empty Thursdays inside the existing Monday queue get used first). If the article being pushed already has `scheduled_date` in its frontmatter (because `/content-schedule` was run upstream), that date is the default instead of a fresh computation.
 
 The user can always override in Step 2 by typing a `YYYY-MM-DD` date or `now`.
 

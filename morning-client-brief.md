@@ -53,13 +53,14 @@ Path: `$VAULT_PATH/2 - Business/Clients/_inbox/`. Create it if it doesn't exist.
 **Section order in every generated file:**
 1. Header
 2. Watch strip (if any flags exist)
-3. Today's Plan
-4. Immediate Tasks (if any open tasks exist)
-5. Live Notes
-6. `---`
-7. From Last Session
-8. Client Context
-9. Voice Notes
+3. Gate strip (if onboarding-gate items are outstanding)
+4. Today's Plan
+5. Immediate Tasks (if any open tasks exist)
+6. Live Notes
+7. `---`
+8. From Last Session
+9. Client Context
+10. Voice Notes
 
 The file is designed for a single readable glance at the top (Watch + programme), then live editing (Live Notes), then reference detail below the fold.
 
@@ -90,6 +91,24 @@ Format as a single blockquote, semicolon-separated, max 3 items. Keep it to one 
 ```
 
 If nothing is flagged from either source, omit the Watch strip entirely.
+
+#### Gate strip
+
+The onboarding gate surfaces in every brief until the client clears it, so gaps get closed in the room instead of drifting. Check `[Client Name] - Profile.md` for outstanding gate items:
+
+- An onboarding-gate checklist block still present with unchecked `- [ ]` items → list those items
+- `**WIA screen:** Not yet screened` (or similar) → `WIA screen`
+- Nutrition intake prompts still unanswered, or any "Intake pending" marker → `nutrition intake`
+- Monitoring & Accountability `**Named failure point:**` empty or missing → `failure point`
+- Monitoring & Accountability `**Current habit(s):**` empty, missing, or no active habit → `first habit`
+
+If any are outstanding, output a single compact blockquote directly under the Watch strip (same one-line style):
+
+```
+> **Gate:** [item 1]; [item 2]; [item 3]
+```
+
+If nothing is outstanding, omit the strip entirely. Don't expand on the items — the Profile and the Onboarding Intake SOP carry the detail; this line is the reminder that the gate isn't cleared.
 
 #### Today's Plan
 
