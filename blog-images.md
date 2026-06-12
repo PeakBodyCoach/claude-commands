@@ -1,6 +1,6 @@
 # /blog-images
 
-Source images and identify candidate assets for a Peak Body Coach blog article. Reads the article, downloads stock photo candidates for hero and body slots, identifies the sharpest pull-quote sentence, recommends a diagram layout, and produces an `image-plan.md` with ready-to-run commands for the downstream image skills.
+Source images and identify candidate assets for a Peak Body Coach blog article. Reads the article, downloads stock photo candidates for hero and body slots, identifies the sharpest pull-quote sentence, drafts and renders the diagram, and produces an `image-plan.md` with ready-to-run commands for the downstream image skills.
 
 ## Usage
 
@@ -43,7 +43,7 @@ Before running anything else, check the path the user passed:
 1. If the article is at `Blog/1 - Draft/[topic-slug]/[topic-slug].md` (filename matches parent folder, parent of parent is `1 - Draft`), proceed. The slug is the parent folder name.
 2. If the article is at `Blog/1 - Draft/[any-name].md` (root of `1 - Draft/`, no per-article subfolder) OR inside a topic-bucket folder like `Blog/1 - Draft/blog-draft-training/[any-name].md`, **stop with this message**:
 
-   > This article isn't in the new per-article subfolder convention. `/blog-images` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Either move the article into its own slug-named subfolder first, or — if this is a legacy draft you don't want to migrate — generate images by hand using `featured-image`, `pull-quote`, and `infographic-prompt` directly.
+   > This article isn't in the new per-article subfolder convention. `/blog-images` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Either move the article into its own slug-named subfolder first, or — if this is a legacy draft you don't want to migrate — generate images by hand using `featured-image`, `pull-quote`, and `diagram-prompt` directly.
 
    Existing legacy drafts are deliberately not migrated by this command. The new structure applies to new articles only.
 
@@ -62,7 +62,7 @@ Every blog post ships with three image assets: a hero (featured image) and two b
 | Marker type | Producer skill | Stock needed? |
 |---|---|---|
 | `quote` | `pull-quote` | No (sentence identified from body) |
-| `diagram` | `infographic-prompt` (Gemini) or `diagram-prompt` (NotebookLM) | No (layout proposed from body content) |
+| `diagram` | `diagram-prompt` (rich-mode Gemini) | No (composition + labels drafted from body content) |
 | `body` | `featured-image` skill | Yes (3 stock candidates downloaded) |
 
 **Marker authority.** The markers in the body are authoritative on which slot types to produce. If the user wants to swap a slot type (e.g. diagram fit is weak, prefer body stock instead), they edit the marker in the body and re-run `/blog-images`. This command does not propose unmarked candidate types as alternatives.
@@ -125,54 +125,41 @@ The candidate sentence should be near the quote marker's position in body. If th
 
 If no sentence in the article meets these rules well, return the closest match with a note flagging it. The user decides whether to use it or swap the marker for `body`.
 
-### 3. Propose a diagram layout and draft the content
+### 3. Draft and render the diagram (rich-mode Gemini)
 
 **Skip this step if no marker has type `diagram`.**
 
-Match the article's structure to one of the eleven `infographic-prompt` layouts. Check them in the order listed — the first strong match wins.
+Diagrams render directly through Gemini in the **F4 rich-mode editorial-schematic register**, via the `diagram-prompt` skill's pipeline. Read `diagram-prompt/SKILL.md` for the full register, composition archetypes, accent options, and constraints. There is no NotebookLM step and no infographic-layout JSON, and the diagram is generated in this command (not just planned).
 
-| Priority | Layout | Use when the article contains... |
-|---|---|---|
-| 1 | `single-stat-callout` | One key statistic with supporting context (e.g. "19% of people maintain goals past 8 weeks"). Most visually strong layout — reach for this first whenever a single number is the hero of the article. |
-| 2 | `spectrum` | A dose-response or optimal-range argument (e.g. "how much protein", "how much volume", "sleep duration"). The content sits on a continuous scale with a meaningful sweet spot. |
-| 3 | `mechanism` | A cause-and-effect chain explaining HOW something works (e.g. "why GLP-1s cause muscle loss", "how MPS works", "the cortisol-sleep cycle"). Order is causal, not just sequential. |
-| 4 | `evidence-callout` | A bold research claim supported by 3-4 evidence points, where the finding is a sentence rather than a number (e.g. "protein distribution matters as much as total intake"). |
-| 5 | `action-plan` | A sequenced set of 3-6 imperative steps the reader should take — instructional "how to" content. Items are things to DO, in order. |
-| 6 | `hero-breakdown` | A composition split or allocation with percentages (e.g. "where should your protein come from", "how to split your training week"). |
-| 7 | `priority-stack` | A ranked hierarchy where the order signals importance — "do this first, not last" (e.g. nutrition hierarchy, training priority). Items are not equally weighted. |
-| 8 | `acronym-framework` | An acronym to unpack — established (SMART, FITT) or invented PBC framework. |
-| 9 | `two-column-comparison` | The article explicitly structures its argument as parallel opposing pairs — 4-7 named left/right pairs already present in the text (e.g. a dedicated myth-vs-fact section with multiple paired items). Do NOT use just because the article mentions misconceptions or contrasts ideas in passing. |
-| 10 | `listicle` | A list of principles, observations, or aphorisms — things the reader should THINK or KNOW, not do. Items are equally weighted, not ranked, not imperatives. |
-| 11 | `three-elements` | Exactly three single-word pillar concepts (e.g. "lift, eat, sleep"). Weakest layout — only use if the content genuinely reduces to three punchy single words with no further structure needed. |
+1. **Pick a composition archetype** for the diagram marker's section: single-figure with annotation, comparison, central figure plus supporting graphic, or flow/sequence. The rule is *diagram the idea, don't depict it*. Anatomy/biomechanics fit this lane too (rich mode permits tonally-shaded medical-illustration line-art).
+2. **Author the prompt body** (everything ABOVE the style preset, which the renderer appends): a `Create one single landscape image:` preamble (never the word "slide"), a `FORMAT: 1456x816 landscape` line, a COPY block (title + optional kicker pill + tagline, verbatim, British spelling), a FIGURE LABELS block (the ONLY label text allowed on the figure, plus the line *invent no other ticks, numbers, units or words*), and a CREATIVE DIRECTION paragraph describing the composition and which single element the accent marks. Voice rules apply to every word.
+3. **Write a one-slide spec JSON** to `images/diagram-spec.json` (build it with a small Python helper using json.dump so newlines/quotes stay clean):
 
-Using the priority table, identify the **3-4 most plausible layouts** for this article. For each, write a one-sentence gist describing what the infographic would show. Mark your recommendation.
-
-**Example output format:**
-- **mechanism** (recommended): restriction → forbidden fruit effect → binge → tighter rules, 4-node left-to-right chain
-- **evidence-callout**: hero claim "THE RESTRICTION WAS PRODUCING THE BINGE ALL ALONG" + 3 Polivy/Herman/Mann research points
-- **listicle**: 5 signs you're in the binge-restrict loop, on a cream paper card
-- **two-column-comparison** (weak fit): discipline camp vs intuitive eating camp, 5 paired rows
-
-Present the gists and ask Tom which layout to generate. **Wait for his response before proceeding.**
-
-Once Tom confirms a layout:
-
-1. Read `C:/Users/Tom/.claude/skills/infographic-prompt/layouts/[chosen-layout].json`
-2. Fill in all content placeholders from the article. Voice rules apply: British spelling, no em dashes, ALL CAPS for titles and kicker pills, sentence case for body items and taglines. Do not leave any placeholder unfilled.
-3. Write the filled `content` block (just the content object, not the full layout JSON) to `images/_diagram-content.json` inside the article's images folder.
-4. Run the generator:
-
-```powershell
-cd C:/Users/Tom/projects/stock-images
-python generate_infographic.py `
-  --layout [chosen-layout] `
-  --content "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/_diagram-content.json" `
-  --output "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/[topic-slug]-diagram.png"
+```json
+{ "topic": "[topic-slug]", "slides": [ { "n": 1, "body": "Create one single landscape image: ..." } ] }
 ```
 
-5. Report the result: image size if successful, or the error message if it failed.
+4. **Render via the API (default):**
 
-If the script fails or Tom wants a fallback, the NotebookLM D2 prompt in `image-plan.md` is always available as an alternative.
+```powershell
+python $HOME\.claude\skills\carousel-prompt\scripts\generate_carousel_gemini.py `
+  --prompts "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/diagram-spec.json" `
+  --out "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images" `
+  --aspect 16:9 --width 1456 --height 816 --no-handle --accent teal
+```
+
+Output saves as `images/1.png`; rename to `[topic-slug]-diagram.png`. `--no-handle` drops the @peakbodycoach handle and set-coherence (carousel-only). `--accent` picks the focus colour: teal (default, evidence/focus), red (loud myth-busts), green (calm).
+
+5. **If the API 503s** (the Pro image model intermittently overloads), re-run it, or use the web-on-Pro fallback which dodges the 503s (needs the one-time `gemini_web_render.py login`; set the web profile to Nano Banana Pro):
+
+```powershell
+python $HOME\.claude\skills\carousel-prompt\scripts\gemini_web_render.py render `
+  --prompts "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/diagram-spec.json" `
+  --out "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images" `
+  --no-handle --width 1456 --height 816
+```
+
+6. **View the result and report** the size if successful, or the error if it failed. Re-roll if labels garble, the accent floods, or the concept reads as a literal prop rather than a schematic. For a SPECIFIC real technique/person that must be accurate, attach a reference image via the web path's `ref` field (see `diagram-prompt/SKILL.md`).
 
 ### 4. Generate hero and body search queries
 
@@ -416,76 +403,39 @@ The `--slug` rewrites the filename to `[topic-slug]-quote.png` for SEO. The pull
 
 **Include this section in the image-plan.md output only if Slot 1 or Slot 2 has type `diagram`.** Label the section heading with the slot number it fills (e.g. "Slot 2 — Diagram").
 
-**Layout used:** [layout name]
+**Composition archetype:** [single-figure with annotation / comparison / central figure + supporting graphic / flow or sequence]
 
 **Why:** [one-line rationale]
 
-**Generated at:** `images/[topic-slug]-diagram.png` ([size]KB)
+**Accent:** [teal (default) / red / green]
 
-**To regenerate** (if the output needs a retry), run from the article folder:
+**Generated at:** `images/[topic-slug]-diagram.png` ([size]KB), rich-mode Gemini.
+
+**To regenerate** (edit `images/diagram-spec.json` first to tweak copy/labels):
 
 ```powershell
-cd C:/Users/Tom/projects/stock-images
-python generate_infographic.py `
-  --layout [chosen-layout] `
-  --content "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/_diagram-content.json" `
-  --output "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/[topic-slug]-diagram.png"
+python $HOME\.claude\skills\carousel-prompt\scripts\generate_carousel_gemini.py `
+  --prompts "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/diagram-spec.json" `
+  --out "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images" `
+  --aspect 16:9 --width 1456 --height 816 --no-handle --accent teal
 ```
 
-The content JSON is at `images/_diagram-content.json` — edit it directly if you want to tweak wording before regenerating.
+Output saves as `images/1.png`; rename to `[topic-slug]-diagram.png`.
 
 ---
 
-### Fallback — Diagram prompt (NotebookLM, illustration-led, loosened brand)
+### Fallback — web-on-Pro (dodges the API 503s)
 
-Use this if the Gemini API output is poor, or if the article is anatomy/biomechanics content that needs illustration rather than typography.
+If the API returns `503 UNAVAILABLE` (the Pro image model intermittently overloads), render the same spec through the Gemini web app instead. Needs the one-time `gemini_web_render.py login`; set the web profile's model to Nano Banana Pro for clean hero type.
 
-**Composition archetype:** [single-figure with annotation / anatomical comparison / single concept with supporting graphic / sequence diagram]
-
-**Fit note:** [strong / weak — one line on why. If weak (e.g. non-anatomy content), flag it here.]
-
-### D2 — NotebookLM prompt
-
-**Composition archetype:** [single-figure with annotation / anatomical comparison / single concept with supporting graphic / sequence diagram]
-
-**Fit note:** [strong / weak — one line on why. If weak (e.g. non-anatomy content), flag it here.]
-
-**Paste-ready NotebookLM prompt:**
-
-```
-Create a [composition shape] explaining [topic]: [one-line summary of core argument].
-
-VISUAL STYLE:
-Editorial technical-drawing aesthetic, in the style of a sports science textbook figure or an engineering blueprint. Anatomical illustration is the central element. Choose either Ink #171717 background OR a clean cream/grid-paper background based on best composition. Cream #ECE6D7 for primary text. One restrained accent colour permitted for force vectors, anatomical highlights, and annotation lines. Pick from cyan, muted teal, or muted red. Use the accent sparingly. Fine grain or paper texture across the image. British spelling throughout.
-
-TYPOGRAPHY:
-Title: bold condensed display sans-serif (Anton-style), ALL CAPS, dominant scale.
-Kicker pills and annotation labels: monospace typewriter font (Courier-style), ALL CAPS, sitting in square-corner pills with contrasting fill. NO rounded corners on pills.
-Cue/section headings: Title Case, modern sans-serif (Switzer-style), regular weight.
-Body text and explanations: sentence case, modern sans-serif (Switzer-style), regular weight.
-
-COMPOSITION:
-[Natural-language description of where each element sits, what each annotation says, what the central illustration shows, and what arrows and force vectors are needed. Include kicker pill labels, heading text, body explanations, arrow directions verbatim.]
-
-HARD CONSTRAINTS:
-- The anatomical illustration is technical-editorial in style, not photorealistic, not cartoonish, not anime, not glossy textbook.
-- The figure must not show identifiable facial features. Use rear views, bald figures, or minimal profile detail.
-- No watermarks, no logos, no decorative marks in any corner.
-- Pills have SQUARE CORNERS only. No border-radius under any circumstances.
-- The accent colour appears in 3-5 places maximum, never overwhelming the Cream/Ink base.
-- Every annotation carries information. No decorative labels.
-- Asymmetric composition, never grid-locked.
-- British spelling throughout.
+```powershell
+python $HOME\.claude\skills\carousel-prompt\scripts\gemini_web_render.py render `
+  --prompts "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images/diagram-spec.json" `
+  --out "C:/Users/Tom/Documents/Home Vault/2 - Business/Content/Blog/1 - Draft/[topic-slug]/images" `
+  --no-handle --width 1456 --height 816
 ```
 
-**NotebookLM settings:** Style preset: Scientific. Orientation: Landscape (or Portrait for tall single-figure compositions). Detail level: Standard.
-
-**Source to load:** [what document or note to load as a source in the notebook before generating]
-
-After generating, crop the watermark (run from the article folder):
-`python ~/.claude/skills/infographic-prompt/scripts/remove_notebooklm_watermark.py images/<downloaded.png> --bg "#171717" --mask-width 70 --mask-height 55`
-
-For cream/grid-paper outputs, drop `--bg "#171717"` (auto-samples the background). If the mask clips text, reduce `--mask-width` further. Save as a file starting with `gemini` in `images/`.
+The web renderer masks the bottom-right watermark automatically. See `diagram-prompt/SKILL.md` for the full register, composition archetypes, anatomy handling, and reference-conditioned (accurate-depiction) rendering.
 
 ---
 
@@ -539,7 +489,7 @@ Summarise in chat:
 - SEO keywords: [comma-separated list]
 - Slot map: Slot 1 = [type], Slot 2 = [type] (from body markers)
 - Pull-quote candidate (if any quote marker): [first 50 chars of the quote]... — [strong / weak]
-- Diagram generated (if any diagram marker): [layout] — [size]KB at `images/[slug]-diagram.png`, or error message if failed
+- Diagram generated (if any diagram marker): [composition archetype], [accent] — [size]KB at `images/[slug]-diagram.png` (rich-mode Gemini), or error message if failed
 - Hero queries: [list]
 - Body queries (if any body marker): [list]
 - Total stock images downloaded: [count]
@@ -586,6 +536,6 @@ That ends the `/blog-images` flow. Nothing else runs from this command.
 - If the article path doesn't exist or can't be read, stop and report the error rather than guessing
 - If a quote marker exists, the pull-quote candidate is always proposed — never refuse to suggest one. If no sentence meets the rules cleanly, propose the closest and flag it as weak so the user can decide whether to swap the marker for `body`.
 - If a diagram marker exists, always generate gists for at least 3 layouts and recommend one — never refuse. If no layout fits cleanly, flag it as weak so Tom can swap the marker to `body` if he prefers.
-- The `images/_diagram-content.json` file is left in place after generation — Tom can edit it and rerun `generate_infographic.py` directly without re-running the full command.
-- The `GEMINI_API_KEY` env var must be set before the generator runs. If it's missing the script exits with a clear message.
+- The `images/diagram-spec.json` file is left in place after generation — Tom can edit the body and rerun the diagram renderer directly without re-running the full command.
+- The `GEMINI_API_KEY` env var must be set for the API diagram path. If the Pro model 503s, fall back to the web-on-Pro renderer (no key needed, uses the saved Gemini login).
 - Both flags ("weak quote", "weak diagram fit") are signals to the user, not directives. The user makes the editorial call by editing the marker in the article body and re-running `/blog-images`.
