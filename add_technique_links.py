@@ -9,7 +9,7 @@ Each embed targets just the Step-by-Step section of the technique doc, not the
 full document — so the cues are visible inline without the evidence tables etc.
 
 Usage:
-    python ~/.claude/commands/add_technique_links.py <path-to-client-file.md>
+    python $HOME\.claude\commands\add_technique_links.py <path-to-client-file.md>
 
 Re-run at any time to regenerate — the existing section is replaced.
 """

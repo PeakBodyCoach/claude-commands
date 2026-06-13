@@ -10,9 +10,9 @@ Run all six source searches in order. Do not skip any step.
 
 ### Source 1 — YouTube
 
-Run the `/youtube-search` command (or `/yt-search`) for **$ARGUMENTS**.
+Run the `/yt-search` command for **$ARGUMENTS**.
 
-The YouTube command uses `yt-dlp` via `python ~/.claude/commands/youtube_search.py`. If it is not available in this session, search YouTube manually for: `$ARGUMENTS evidence based`
+The YouTube command uses `yt-dlp` via `python $HOME\.claude\commands\youtube_search.py`. If it is not available in this session, search YouTube manually for: `$ARGUMENTS evidence based`
 
 ### Source 2 — PubMed
 

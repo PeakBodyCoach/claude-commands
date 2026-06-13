@@ -12,7 +12,7 @@ End-to-end onboarding from intake form (or conversation) to fully scaffolded cli
 clients.csv  → C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\clients.csv
 clients dir  → C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\
 tasks.md     → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\tasks.md
-intake form  → C:\Users\Tom\Documents\Home Vault\2 - Business\Coaching\SOPs\Onboarding Form.md
+intake form  → C:\Users\Tom\Documents\Home Vault\2 - Business\Coaching\Templates\Onboarding Form.md
 ```
 
 ---

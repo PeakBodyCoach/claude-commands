@@ -45,7 +45,7 @@ Before doing anything else, check the resolved path:
 1. If the article is at `Blog/1 - Draft/[topic-slug]/[topic-slug].md` (filename matches parent folder, parent of parent is `1 - Draft`), proceed. The slug is the parent folder name.
 2. If the article is at `Blog/1 - Draft/[any-name].md` (root of `1 - Draft/`, no per-article subfolder) OR inside a topic-bucket folder like `Blog/1 - Draft/blog-draft-training/[any-name].md`, **stop with this message**:
 
-   > This article isn't in the new per-article subfolder convention. `/publish-gate` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Either move the article into its own slug-named subfolder and re-run `/blog-images`, or — if this is a legacy draft you don't want to migrate — publish it by hand using the old Notion + Drive flow.
+   > This article isn't in the new per-article subfolder convention. `/publish-gate` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Either move the article into its own slug-named subfolder and re-run `/blog-images`, or — if this is a legacy draft you don't want to migrate — migrate the draft into the per-article subfolder convention (Blog\1 - Draft\[topic-slug]\) and run the publish pipeline from there.
 
    Legacy drafts at the root of `1 - Draft/` are intentionally not handled by this command. The new structure applies to new articles only.
 

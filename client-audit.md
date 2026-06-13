@@ -20,8 +20,8 @@ If the name is ambiguous or doesn't match a CSV row, ask. Don't guess.
 clients.csv  → C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\clients.csv
 clients dir  → C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\
 tasks.md     → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\tasks.md
-sessions.csv → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\sessions.csv
-availability → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\availability.md
+sessions.csv → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\Bookings\sessions.csv
+availability → C:\Users\Tom\Documents\Home Vault\2 - Business\Operations\Bookings\availability.md
 ```
 
 ## Canonical folder structure (Andrew Rhodes pattern)

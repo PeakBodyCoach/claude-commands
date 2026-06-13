@@ -12,7 +12,7 @@ Run this after `/notebooklm-build $ARGUMENTS` has completed.
 ## Step 1 — Load the research
 
 Look for the Obsidian note at:
-`C:\Users\Tom\Documents\Home Vault\3 - Resources\[topic-subfolder]\$ARGUMENTS.md`
+`C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[topic-subfolder]\$ARGUMENTS.md`
 
 Also check whether `nlm_responses.json` is still present in the working directory.
 If it is, use it — it contains more granular detail than the note.
@@ -161,4 +161,4 @@ Next steps:
 3. The content sheet skill will complete the remaining sections (audience, solution, analogies, objections, tone direction, content opportunities)
 
 The Obsidian knowledge note is already in your vault at:
-`C:\Users\Tom\Documents\Home Vault\3 - Resources\[subfolder]\$ARGUMENTS.md`
+`C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[subfolder]\$ARGUMENTS.md`

@@ -10,7 +10,7 @@ Parse the arguments:
 Run this command (adjust the count and query accordingly):
 
 ```bash
-python ~/.claude/commands/youtube_search.py -n <count> <query>
+python $HOME\.claude\commands\youtube_search.py -n <count> <query>
 ```
 
 Then display the output clearly to the user. Each result should show:

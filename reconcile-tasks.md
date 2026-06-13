@@ -93,7 +93,7 @@ On Tom's confirm, for each task to close:
 
 If Tom asks to "sort assignments" or "who does what", or after a large triage, surface the **unassigned** open tasks (no `#person/` tag) grouped by likely owner:
 
-- **Khaela-doable** (OneFit uploads/fixes, exercise-library additions, Notion updates, logging corrections) — leave unassigned (she sees these on her board) or tag `#person/khaela` if Tom wants them explicitly hers.
+- **Khaela-doable** (OneFit uploads/fixes, exercise-library additions, vault note updates, logging corrections) — leave unassigned (she sees these on her board) or tag `#person/khaela` if Tom wants them explicitly hers.
 - **Tom-only** (coaching calls, client messages, writing/normalising programmes, technique investigation, nutrition strategy, billing decisions) — tag `#person/tom` so they drop off Khaela's board.
 
 Propose the split, let Tom confirm, then apply the tags in place. Default if Tom doesn't engage: leave everything unassigned (Khaela sees the full pool, which is the intended default).

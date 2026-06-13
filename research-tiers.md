@@ -7,7 +7,7 @@ Invoke as: `/research-tiers $ARGUMENTS`
 ## Context: The tier system
 
 All research topics live in:
-`C:\Users\Tom\Documents\Home Vault\1 - Projects\Content\positioning-topics.md`
+`C:\Users\Tom\Documents\Home Vault\2 - Business\Content\Brand & Strategy\positioning-topics.md`
 
 Each topic bullet is tagged with one of three tiers. Sub-bullets contain Tom's existing stance notes — always read these before starting work.
 
@@ -118,18 +118,18 @@ After reviewing, update positioning-topics.md:
 - Remove the tag if fully resolved
 ```
 
-**Save to:** `C:\Users\Tom\Documents\Home Vault\3 - Resources\[subfolder based on topic/ tag]\[Topic].md`
+**Save to:** `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[subfolder based on topic/ tag]\[Topic].md`
 
 Subfolder map:
 | topic/ tag | Path |
 |---|---|
-| nutrition | `3 - Resources\Nutrition` |
-| training | `3 - Resources\Training` |
-| supplementation | `3 - Resources\Supplementation` |
-| recovery | `3 - Resources\Recovery` |
-| body-composition | `3 - Resources\Body Composition` |
-| health | `3 - Resources\Health` |
-| psychology | `3 - Resources\Psychology` |
+| nutrition | `3 - Knowledge\Nutrition` |
+| training | `3 - Knowledge\Training` |
+| supplementation | `3 - Knowledge\Supplementation` |
+| recovery | `3 - Knowledge\Recovery` |
+| body-composition | `3 - Knowledge\Body Composition` |
+| health | `3 - Knowledge\Health` |
+| psychology | `3 - Knowledge\Psychology` |
 
 ---
 
@@ -194,7 +194,7 @@ source: pubmed + consensus
 > [Refined, sharpened stance note — ready to paste as the sub-bullet on the topic line. Should be more specific and citation-grounded than the original.]
 ```
 
-**Save to:** `C:\Users\Tom\Documents\Home Vault\3 - Resources\[subfolder]\[Topic] — Evidence.md`
+**Save to:** `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[subfolder]\[Topic] — Evidence.md`
 
 ---
 

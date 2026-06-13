@@ -608,7 +608,7 @@ If nothing in the research clears the "interesting to an expert" bar, write a si
 If the user provided a recipient email or name (e.g. "share with Khaela"), share the notebook with them as a viewer:
 
 ```bash
-python scripts/run.py nlm.py share-permission <email> --role viewer
+python scripts/run.py nlm.py share add <email> --permission viewer
 ```
 
 Report the confirmation. If no email was provided, skip this step silently — do not prompt.

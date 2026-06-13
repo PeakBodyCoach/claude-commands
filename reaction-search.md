@@ -15,7 +15,7 @@ There are three modes. Check them in this order:
 If a content sheet has just been built in our conversation and has a filled "Reaction Search Queries" section with YouTube queries, use those. Show Tom the topic and the three queries you'll run, confirm, then call the script with explicit positional arguments:
 
 ```bash
-python "C:\Users\Tom\.claude\scripts\reaction-search.py" --topic "<TOPIC>" "<QUERY1>" "<QUERY2>" "<QUERY3>"
+python "C:\Users\Tom\.claude\commands\reaction-search.py" --topic "<TOPIC>" "<QUERY1>" "<QUERY2>" "<QUERY3>"
 ```
 
 ### Mode 2: Tom points to a saved content sheet
@@ -23,7 +23,7 @@ python "C:\Users\Tom\.claude\scripts\reaction-search.py" --topic "<TOPIC>" "<QUE
 If Tom references a content sheet by name or path (e.g. "use the GLP-1 muscle loss sheet"), find the file in the vault and pass its path via `--from-sheet`. The script handles topic and query extraction itself:
 
 ```bash
-python "C:\Users\Tom\.claude\scripts\reaction-search.py" --from-sheet "<PATH>"
+python "C:\Users\Tom\.claude\commands\reaction-search.py" --from-sheet "<PATH>"
 ```
 
 Content sheets typically live under `C:\Users\Tom\Documents\Home Vault\2 - Business\Content\`. Use Filesystem tools to find the right file if the path isn't given. Confirm the file you found before running.
@@ -45,7 +45,7 @@ After the script runs:
 
 ## Pick a target and stage it
 
-After the candidates file is written, the next step is to pick one target and stage its metadata for `/video-script-writing` to pick up. This is a single round-trip with Tom, not a separate command.
+After the candidates file is written, the next step is to pick one target and stage its metadata for `/video-script-writing` to pick up. Cut-based reactions go to the `reaction-script-writing` skill instead (per-beat prompt sheet), which also reads `reaction-staging.json`. This is a single round-trip with Tom, not a separate command.
 
 ### 1. Show the shortlist
 
@@ -95,13 +95,13 @@ Overwrite any existing `reaction-staging.json` without prompting — it's transi
 
 Report:
 
-> "Staged `[creator]` — `[title]`. Run `/video-script-writing [topic-slug]` next, or just say 'write the reaction script' and I'll pick it up automatically."
+> "Staged `[creator]` — `[title]`. Run `/video-script-writing [topic-slug]` next, or use the `reaction-script-writing` skill for a cut-based reaction (per-beat prompt sheet, reads the same `reaction-staging.json`). Or just say 'write the reaction script' and I'll pick it up automatically."
 
 ## Error handling
 
 Map common script errors:
 
-- **"YOUTUBE_API_KEY not set"** → point Tom to `setup.md` in the reaction-search folder
+- **"YOUTUBE_API_KEY not set"** → the YouTube Data API key must be available as the `YOUTUBE_API_KEY` environment variable. If it's missing, set it for the session with `$env:YOUTUBE_API_KEY = "<key>"`, or add it to the user environment to persist it.
 - **"quotaExceeded"** → daily 10k unit cap hit (~30 runs of 3 queries). Tell him to retry tomorrow.
 - **"No 'Reaction Search Queries' section..."** → the sheet doesn't have the section filled in, or the heading is malformed. Offer to ask for queries directly instead.
 - **"marked N/A"** → Tom flagged the topic as non-video in the sheet. Ask if he wants to override.

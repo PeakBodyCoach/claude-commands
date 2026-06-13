@@ -305,7 +305,7 @@ Rationale: [why this query suits the hero slot]
 **To produce this asset, run:**
 
 ```bash
-python ~/.claude/skills/featured-image/generate_featured_image.py \
+python $HOME\.claude\skills\featured-image\generate_featured_image.py \
   images/hero/[chosen-filename] \
   images/[topic-slug]-featured.png \
   --headline "[headline candidate]" \
@@ -346,7 +346,7 @@ Often a question or sub-claim from later in the article works:
 **To produce this asset, run:**
 
 ```bash
-python ~/.claude/skills/featured-image/generate_featured_image.py \
+python $HOME\.claude\skills\featured-image\generate_featured_image.py \
   images/body/[chosen-filename] \
   images/[topic-slug]-body-treated.png \
   --headline "[suggested body-image headline]" \
@@ -383,7 +383,7 @@ instead.
 **To produce this asset, run:**
 
 ```bash
-python ~/.claude/skills/pull-quote/generate_quote_image.py \
+python $HOME\.claude\skills\pull-quote\generate_quote_image.py \
   images/[topic-slug]-quote.png \
   --quote "[quote text]" \
   --category "[category]" \

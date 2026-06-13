@@ -48,14 +48,14 @@ Match the task's intent to a route. Pick the most automated route that fits.
 | Upload / sync a meal plan | `/meal-plan-sync [client]` | live-1Fit |
 | Push macros to 1Fit | `/macro-sync [client]` | live-1Fit |
 | Audit / normalise a programme against the library | `/normalise-programme [client]` | yes (vault-side) |
-| Update a client's Notion programme / split | Update the Notion page directly via the Notion tools | yes |
+| Update a client's programme / split | Edit the client's Programmes.md in the vault (2 - Business\Clients\[Client]\) | yes |
 | Look up / research cues, notes, progressions | Web + vault search, then write the note where it belongs | yes |
 | Correct a logged set, remove an exercise, rename an exercise in 1Fit | **No automation** (1fit-sync is create-only) → exact manual steps | manual |
 | Message a client, make a coaching call, write a programme from scratch | Tom's job → reassign | reassign |
 
 ### Execute the route
 
-- **Runs now (vault-side / Notion / research):** propose it, and on a yes, actually run it (invoke the skill or do the work). Show the result.
+- **Runs now (vault-side / research):** propose it, and on a yes, actually run it (invoke the skill or do the work). Show the result.
 - **Live-1Fit, and capability is available (Tom):** propose the exact command, and on a yes, run the automation.
 - **Live-1Fit, capability NOT available (Khaela, pre-auth):** do all the prep you can now — run `/normalise-programme` so the programme is sync-ready, confirm the cycle exists, classify any new exercises, find demo videos — then output the ready-to-run command and a one-line handoff: "Prepped. The live OneFit push needs the 1Fit login (not set up for you yet). Either Tom runs `/1fit-sync [client]`, or I tag this to Tom." Offer to reassign or leave it parked.
 - **Manual:** give numbered, click-by-click 1Fit steps for exactly this change. Be specific (which client, plan, workout, exercise, field, old value → new value).
