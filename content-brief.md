@@ -1,9 +1,10 @@
 Generate a content research dossier for: $ARGUMENTS
 
-This command bridges the NotebookLM research pipeline and the content creation skills.
-It reads the research already gathered and produces two structured outputs:
-1. Pre-loaded angle candidates for the angle-generation skill
-2. Pre-filled section material for the content-sheet skill
+This command turns the NotebookLM research base into a single structured research dossier:
+the upstream raw material the `content-sheet` skill draws from. It does the research
+extraction only. It does NOT pre-write angles or pre-fill a content sheet, those are the
+`angle-generation` and `content-sheet` skills' jobs, and pre-doing them here just drifts
+out of sync with the skills.
 
 Run this after `/notebooklm-build $ARGUMENTS` has completed.
 
@@ -58,107 +59,48 @@ polished yet.
 
 ---
 
-## Step 3 — Output Part 1: Angle candidates
+## Step 3 — Output the dossier
 
-Output this block first, clearly labelled for the angle-generation skill:
+Present the extracted signals as a single clearly-labelled research dossier. This is the
+deliverable. Keep it to the research, do not write angles or content-sheet sections,
+the skills downstream own those.
 
 ---
-### ANGLE CANDIDATES FOR: $ARGUMENTS
-*Feed these into the angle-generation skill. Each is grounded in the actual research.*
+### RESEARCH DOSSIER: $ARGUMENTS
 
-**Contrarian**
-- [Research-grounded contrarian angle — based on what the evidence actually shows vs the prevailing narrative]
-- [Second contrarian angle if a distinct one exists]
+**Myths & promoters**
+[From A: each myth as the audience actually believes it, who promotes it, the kernel of
+truth that makes it believable, and the need it serves. Minimum 2.]
 
-**Tension & Taboo**
-- [The awkward truth buried in the research that the mainstream takes avoid naming]
+**Surprising stats & findings**
+[From B: concrete numbers, thresholds, counter-intuitive findings, with source names.]
 
-**Novelty & Curiosity Gap**
-- [The most surprising stat or counter-intuitive finding, framed as a hook]
-- [Second novelty angle if distinct]
+**Audience belief gaps**
+[From C: what the audience believes or wants to believe vs what the evidence shows, and
+the emotional payoff of that belief.]
 
-**Audience Belief Gap**
-- [What this audience believes vs what the evidence shows — framed as a position, not a question]
+**Named enemies**
+[From D: who specifically profits from the misconceptions — behaviour and claim, not
+just category.]
 
-**Wrongly Framed Question**
-- [The question everyone asks about $ARGUMENTS, and why it's the wrong question based on what the research shows]
+**Contrarian position**
+[From E: the most defensible against-the-grain position an evidence-based coach could take.]
 
-**Cynical**
-- [What someone who's seen this topic grifted and misrepresented for years would privately say about it]
-
-**Enemy-facing**
-- [A position that directly names who is profiting from the misconceptions and what they're selling]
-
-*Note: These are starting points. The angle-generation skill will push them further.
-Pick 2–4 to explore in depth, or say "run all".*
+**Quotable raw material**
+[From F: 3–5 unpolished candidate one-liners straight from the research.]
 
 ---
 
-## Step 4 — Output Part 2: Content sheet pre-fill
+## Step 4 — Confirm and hand off
 
-Output this block second, clearly labelled for the content-sheet skill:
-
----
-### CONTENT SHEET PRE-FILL FOR: $ARGUMENTS
-*These sections are pre-populated from the NotebookLM research. Paste into the
-content sheet at the relevant sections. Tom's angle and personal disclosure still
-need Tom's input — those are flagged.*
-
-**Myths & Misconceptions** *(pre-filled from research)*
-
-1. **Myth:** [myth as audience believes it]
-   - **Who promotes it:** [specific name/brand/camp]
-   - **Why it persists:** [emotional appeal or incentive]
-   - **Kernel of truth:** [the grain of truth inside it]
-
-2. **Myth:** [second myth]
-   - **Who promotes it:** [specific]
-   - **Why it persists:** [reason]
-   - **Kernel of truth:** [grain of truth]
-
-[Continue for all myths identified — minimum 2, maximum 5]
-
-**Enemy** *(pre-filled from research)*
-[Specific description of who profits from the misconceptions — behaviour and claim,
-not just category]
-
-**Evidence & Credibility** *(pre-filled from research — translate to plain coaching language)*
-
-- [Finding 1]: [what was tested → what it showed → what it means for the reader]
-- [Finding 2]: [same format]
-- [Finding 3]: [same format]
-[Include specific numbers and source names where available]
-
-**Inversions / Script Flips** *(generated from research counterarguments)*
-
-- [Inversion 1 — a genuine flip based on what the evidence shows, not just a myth rewrite]
-- [Inversion 2 — must feel counter-intuitive, not just obvious]
-
-**Quotable Moments** *(raw candidates from research — will need sharpening)*
-
-- [Candidate 1]
-- [Candidate 2]
-- [Candidate 3]
-
-**Tom's Angle + Personal Disclosure**
-[NEEDS TOM'S INPUT: The research shows [summary of what the evidence actually says].
-What does Tom actually think about this beyond the standard take? What has he seen
-coaching clients? What does he do himself? The research gives the platform — Tom's
-personal angle and at least one specific personal detail are still needed here.]
-
----
-
-## Step 5 — Confirm and hand off
-
-After both output blocks, add:
+After the dossier, add:
 
 ---
 **Research dossier complete for: $ARGUMENTS**
 
-Next steps:
-1. Take the angle candidates above into the angle-generation skill — pick 2–4 categories or say "run all"
-2. Once an angle is chosen, take the content sheet pre-fill into the content-sheet skill along with the chosen angle
-3. The content sheet skill will complete the remaining sections (audience, solution, analogies, objections, tone direction, content opportunities)
+This is the research base, not a brief. Next step: take it into the `content-sheet` skill,
+which builds the structured brief every format skill draws from and adds Tom's angle and
+personal disclosure. If the angle isn't decided yet, run `angle-generation` on the dossier first.
 
 The Obsidian knowledge note is already in your vault at:
 `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[subfolder]\$ARGUMENTS.md`
