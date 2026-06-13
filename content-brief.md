@@ -2,9 +2,8 @@ Generate a content research dossier for: $ARGUMENTS
 
 This command turns the NotebookLM research base into a single structured research dossier:
 the upstream raw material the `content-sheet` skill draws from. It does the research
-extraction only. It does NOT pre-write angles or pre-fill a content sheet, those are the
-`angle-generation` and `content-sheet` skills' jobs, and pre-doing them here just drifts
-out of sync with the skills.
+extraction only. It does NOT pre-write angles or pre-fill a content sheet, that's the
+`content-sheet` skill's job, and pre-doing it here just drifts out of sync with the skill.
 
 Run this after `/notebooklm-build $ARGUMENTS` has completed.
 
@@ -100,7 +99,7 @@ After the dossier, add:
 
 This is the research base, not a brief. Next step: take it into the `content-sheet` skill,
 which builds the structured brief every format skill draws from and adds Tom's angle and
-personal disclosure. If the angle isn't decided yet, run `angle-generation` on the dossier first.
+personal disclosure.
 
 The Obsidian knowledge note is already in your vault at:
 `C:\Users\Tom\Documents\Home Vault\3 - Knowledge\[subfolder]\$ARGUMENTS.md`

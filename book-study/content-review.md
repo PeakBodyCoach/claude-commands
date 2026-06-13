@@ -1,11 +1,11 @@
 ---
-description: Summarise content opportunities flagged during extraction, ready for handoff to angle generation. Stage 5 of the book-study pipeline.
+description: Summarise content opportunities flagged during extraction, ready for handoff to the content-sheet skill. Stage 5 of the book-study pipeline.
 argument-hint: [book-slug]
 ---
 
 # /book-study content-review
 
-Stage 5 of the book-study pipeline. Reads the content opportunities flagged during extraction and presents them in a format ready for the angle generation and content sheet workflow.
+Stage 5 of the book-study pipeline. Reads the content opportunities flagged during extraction and presents them in a format ready for the content-sheet workflow.
 
 ## Arguments
 
@@ -74,13 +74,13 @@ If `$1` is `all`, show each book as a separate section, then add a combined summ
 
 After presenting the summary, ask Tom which flags he wants to take forward:
 
-> "Want to run any of these through angle generation? Pick by number or say 'skip' to just review."
+> "Want to run any of these through content-sheet? Pick by number or say 'skip' to just review."
 
 If Tom picks one or more:
 
 - Confirm the concept and hook
-- Offer to launch the angle generation skill directly with the concept as input
-- The angle generation skill accepts a topic in any form, so passing the concept + hook + source context is enough
+- Offer to launch the content-sheet skill directly with the concept as input
+- The content-sheet skill accepts a topic in any form, so passing the concept + hook + source context is enough
 
 If Tom says skip, that's fine. The flags stay in the master file for later.
 

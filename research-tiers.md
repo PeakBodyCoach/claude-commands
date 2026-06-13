@@ -208,7 +208,7 @@ Run the full existing pipeline in order:
 
 1. **`/research [topic]`** — four-source sweep (YouTube, PubMed, Consensus, Substack). Produces the source URL list.
 2. **`/notebooklm-build [topic]`** — creates a NotebookLM notebook, adds all sources, runs the full 20-query set, synthesises and writes the Obsidian knowledge note to the vault.
-3. **`/content-brief [topic]`** — reads the NotebookLM output and produces angle candidates and a pre-filled content sheet, ready for the `angle-generation` and `content-sheet` skills.
+3. **`/content-brief [topic]`** — reads the NotebookLM output and produces a research dossier, ready for the `content-sheet` skill.
 
 No changes to those commands — this tier just routes to them and ensures they run in sequence.
 

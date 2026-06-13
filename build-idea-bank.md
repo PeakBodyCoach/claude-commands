@@ -1,7 +1,7 @@
 ---
 name: build-idea-bank
 description: >
-  Build a dated Idea Bank from recent content watchlist digests and vault research outputs. Use whenever Tom asks to build the idea bank, compile the weekly intel, consolidate the watchlist, or "build the idea bank". Takes no arguments — runs against the vault automatically. Outputs a dated Idea Bank - YYYY-MM-DD.md ready for angle generation.
+  Build a dated Idea Bank from recent content watchlist digests and vault research outputs. Use whenever Tom asks to build the idea bank, compile the weekly intel, consolidate the watchlist, or "build the idea bank". Takes no arguments — runs against the vault automatically. Outputs a dated Idea Bank - YYYY-MM-DD.md ready for the content-sheet skill.
 ---
 
 # /build-idea-bank
@@ -161,7 +161,7 @@ Needs hand-curation:
   Content Intel — Competitor
   Specific Swipes
 
-Ready for: /angle-generation or /content-sheet once hand sections are filled.
+Ready for: /content-sheet once hand sections are filled.
 ```
 
 ## Notes

@@ -105,7 +105,7 @@ Section-by-section guidance:
 **Content Opportunities:**
 - Apply the six criteria from SKILL.md: counterintuitive, commonly misunderstood, visually demonstrable, challenges mainstream advice, surprising connection, actionable paradigm shift.
 - Threshold: only flag what you'd actually want to produce content on. Aim for 2–5 per cluster. Zero is fine if nothing qualifies.
-- Write the concept and hook in content-ready voice. When Tom pulls these into `/angle-generation`, the hook should already feel like his.
+- Write the concept and hook in content-ready voice. When Tom pulls these into `/content-sheet`, the hook should already feel like his.
 - Format as a markdown table: Concept | Hook | Format
 
 **NotebookLM Queries:**
