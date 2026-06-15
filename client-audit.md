@@ -33,7 +33,8 @@ Clients/[Full Name]/
 ├── [Full Name] - Session Log.md     ← separate file, newest entries on top
 ├── [Full Name] - Bookings.md        ← Upcoming + History tables
 ├── [Full Name] - Nutrition Plan.md  ← OR opt-out section in Profile
-└── [Full Name] - Check-ins.md       ← OR opt-out section in Profile
+├── [Full Name] - Check-ins.md       ← OR opt-out section in Profile
+└── [Full Name] - Metrics.md         ← raw daily ledger of logged weight + calories
 ```
 
 ## Canonical Profile.md shape
@@ -99,6 +100,7 @@ This is checked as a linked chain in Q5, not as five independent fields.
 4. Read the Programmes file (just the first cycle or two).
 5. Read the most recent 3 entries of the Session Log (whether separate file or embedded section).
 6. Read the Nutrition Plan and Check-ins files if present.
+7. Note whether `[Name] - Metrics.md` (the raw weight/calorie ledger) is present.
 
 Build an internal audit map of drifts and gaps before saying anything to Tom.
 
@@ -207,6 +209,7 @@ Check, in order:
 1. **Failure point** — the named failure point from the Nutrition Plan (Q4) is mirrored in the Profile Monitoring & Accountability section.
 2. **Habit** — at least one active habit (assigned via `/habit-sync`, lives in 1Fit) addresses that failure point, recorded in M&A. Hard cap 1-2 habits, never a checklist.
 3. **Check-in loop** — `[Name] - Check-ins.md` most recent entry is within the last **7 days** AND carries a `Read-back sent` marker. Tom's response is the active ingredient; a logged weight with no read-back is the exact version the evidence finds useless. Or a recorded `### Check-ins: opt-out` exists (then this link is a PASS).
+   - **Raw metrics ledger** — `[Name] - Metrics.md` exists (the canonical raw daily ledger of logged weight + calories; create from template via `metrics_log.ensure_file` if absent). Any weight a client reports at check-in should also land here, dated the day it was sent. This file is raw data only; trends are computed downstream, so don't expect derived columns in it. Missing file = flag as a quick backfill.
 4. **Monitoring dashboard** — the M&A section has all four fields populated with no blanks (metrics tracked, current habit(s), named failure point, accountability mechanism), plus a **next progress review date**.
 5. **Progress review currency** — the next progress review date is within the future 6-week window, or past and due (flag as due).
 6. **WIA consistency** — if the metrics field prescribes high-frequency weighing (daily, or near-daily) but the WIA screen reads `Not yet screened`, flag it. Frequency must be set *after* the screen, not before. Offer to run the one-question screen now (Domain 6 of the Onboarding Intake SOP) or drop the frequency to a safe default until screened.
