@@ -195,16 +195,38 @@ def filter_to_shorts(videos: list) -> list:
     return shorts
 
 
+_ytt_api = None
+_ytt_unexpected_warned = False
+
+
 def get_transcript(video_id: str):
-    """Pull transcript text. Returns string or None if unavailable."""
+    """Pull transcript text. Returns string or None if unavailable.
+
+    Uses the youtube-transcript-api v1.x instance API (`.fetch()`), which
+    replaced the old `YouTubeTranscriptApi.get_transcript` classmethod. A
+    genuinely missing transcript returns None quietly; an UNEXPECTED failure
+    (library API change, IP block) prints one stderr warning so a systemic
+    break surfaces instead of every video silently reading "no captions".
+    """
+    global _ytt_api, _ytt_unexpected_warned
     try:
-        entries = YouTubeTranscriptApi.get_transcript(
+        if _ytt_api is None:
+            _ytt_api = YouTubeTranscriptApi()
+        fetched = _ytt_api.fetch(
             video_id, languages=["en", "en-GB", "en-US"]
         )
-        return " ".join(e["text"] for e in entries)
+        return " ".join(s["text"] for s in fetched.to_raw_data())
     except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable):
         return None
-    except Exception:
+    except Exception as e:
+        if not _ytt_unexpected_warned:
+            _ytt_unexpected_warned = True
+            print(
+                f"  WARNING: unexpected transcript error ({type(e).__name__}: "
+                f"{e}). If every video shows 'no captions', the "
+                f"youtube-transcript-api version may have changed again.",
+                file=sys.stderr,
+            )
         return None
 
 

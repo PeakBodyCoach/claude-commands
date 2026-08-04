@@ -154,7 +154,7 @@ After processing all clusters in the range, output:
 - Clusters skipped (already noted)
 - Content opportunities flagged (count and quick list of concepts)
 - Any clusters where the PDF pages were unclear, the content was thin, or cross-references couldn't be resolved
-- Next step: suggest the next unprocessed chapter range, or if all chapters are done, suggest moving to `/book-study nlm-load`
+- Next step: suggest the next unprocessed chapter range, or if all chapters are done, suggest moving to `/book-study brief` to build the front-door Verdict and Cliffnotes before loading into NotebookLM
 
 ## Handling Large Books
 

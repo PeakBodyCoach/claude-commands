@@ -62,7 +62,7 @@ Path: `$VAULT_PATH/2 - Business/Clients/_inbox/`. Create it if it doesn't exist.
 9. Client Context
 10. Voice Notes
 
-The file is designed for a single readable glance at the top (Watch + programme), then live editing (Live Notes), then reference detail below the fold.
+The file is designed for a single readable glance at the top (Watch + programme), then live editing (Live Notes), then reference detail below the fold. (The brief does NOT create a `## 1Fit Log` section — the nightly 1fit-backfill inserts one above Voice Notes after the session happens.)
 
 **Build the file from these sources:**
 
@@ -151,6 +151,8 @@ For **single-workout cycles** (no sub-headings — just exercises directly under
 
 Only render today's specific workout. Do NOT include the other workouts — Tom can tap into Programmes.md if he needs them.
 
+Render the plan lines from Programmes.md as-is — do NOT compute progressed targets here. The nightly `progression-refresh` script appends ` → **target** *(reason; last …)*` annotations to these lines from the latest 1Fit data (and refreshes them every night). If regenerating a file, plain unannotated lines are correct; the annotations arrive at 9pm.
+
 If Programmes.md is missing, empty, or has no active cycle: `**No programme on file.**`
 
 #### Immediate Tasks
@@ -167,16 +169,15 @@ If any open tasks exist, output:
 
 Omit the section entirely if there are no open tasks.
 
-#### Live Notes section (static prompts)
+#### Live Notes section (static prompt)
 
 ```
 ## Live Notes
-**Changes made:** 
-**Form notes:** 
-**Tasks / follow-ups:** 
-**For next session:** 
-**Khaela report:** 
+**Quick capture:** 
+<!-- flag / decision / task / moment — one line is enough. "clean" = nothing to report. Lift data comes from 1Fit automatically. -->
 ```
+
+One line is the whole ask: anything only Tom knows — a pain flag, a programming decision ("squat to 90 next time"), a follow-up task, or the standout moment for the recap. Sets/reps/weights are backfilled from 1Fit nightly (`## 1Fit Log` section, written by 1fit-backfill), so they never need noting here.
 
 #### Separator
 

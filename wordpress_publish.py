@@ -107,6 +107,53 @@ def parse_frontmatter(text):
     return meta, body
 
 
+def normalize_body(body):
+    """Strip draft scaffolding that must not reach WordPress.
+
+    Converts a leading "## ARTICLE: Title" header into a clean "# Title" H1 and
+    drops the "**Target keyword:**" / "**Word count:**" lines plus the divider
+    that follows them. Also removes a trailing "[BUTTON: ...]" placeholder (the
+    theme auto-appends CTAs). Articles that already start with a real "# H1" are
+    left untouched.
+    """
+    lines = body.split("\n")
+
+    # Leading "## ARTICLE: Title" scaffolding block.
+    i = 0
+    while i < len(lines) and lines[i].strip() == "":
+        i += 1
+    m = re.match(r"^#{1,6}\s*ARTICLE:\s*(.+?)\s*$", lines[i]) if i < len(lines) else None
+    if m:
+        rebuilt = [f"# {m.group(1).strip()}", ""]
+        i += 1
+        while i < len(lines):
+            s = lines[i].strip()
+            if s == "":
+                i += 1
+                continue
+            if re.match(r"^\*\*\s*(target keyword|word count)\b", s, re.I):
+                i += 1
+                continue
+            if s == "---":
+                i += 1
+                break
+            break
+        rest = lines[i:]
+        while rest and rest[0].strip() == "":
+            rest.pop(0)
+        lines = rebuilt + rest
+
+    # Trailing "[BUTTON: ...]" placeholder.
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+    if lines and re.match(r"^\[BUTTON:.*\]\s*$", lines[-1].strip()):
+        lines.pop()
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+
+    return "\n".join(lines).strip() + "\n"
+
+
 def write_frontmatter(meta, body):
     yaml_block = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True).strip()
     return f"---\n{yaml_block}\n---\n\n{body}"
@@ -214,12 +261,36 @@ def substitute_markers(body, markers, uploaded_images):
 
 
 def read_alt_text_for_slot(image_plan_text, slot_type):
-    """Parse image-plan.md for the alt text of a slot of the given type. Best-effort."""
+    """Parse image-plan.md for the alt text of a slot of the given type.
+
+    Plans are sectioned as '## Hero ...' / '## Slot N — <Type> ...'. Within the
+    matching section the alt text appears as an --alt-text "..." argument in a
+    command block, or as alt: "..." on a stock-candidate line. Best-effort;
+    returns "" when nothing matches (caller supplies a fallback).
+    """
     if not image_plan_text:
         return ""
-    pattern = rf"(?i)({slot_type}|hero).*?alt[- ]?text[^:]*:\s*[\"']?([^\"'\n]+)"
-    m = re.search(pattern, image_plan_text)
-    return m.group(2).strip() if m else ""
+    want = slot_type.lower()
+    for section in re.split(r"(?m)^##\s+", image_plan_text)[1:]:
+        heading = section.splitlines()[0].lower() if section.splitlines() else ""
+        if want == "hero":
+            if not heading.startswith("hero"):
+                continue
+        elif not (heading.startswith("slot") and want in heading):
+            continue
+        m = re.search(r'--alt-text\s+"([^"]+)"', section)
+        if not m:
+            m = re.search(r'(?i)alt(?:[- ]?text)?\s*:?\s*"([^"]+)"', section)
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+ALT_FALLBACK = {
+    "quote": "Pull-quote graphic from the article: {title}",
+    "diagram": "Diagram illustrating: {title}",
+    "body": "Illustration for the article: {title}",
+}
 
 
 def read_attributions(attr_csv_path):
@@ -396,6 +467,7 @@ def main():
 
     raw = article_path.read_text(encoding="utf-8")
     meta, body = parse_frontmatter(raw)
+    body = normalize_body(body)
     validate_frontmatter(meta)
 
     is_republish = bool(meta.get("wp_post_id"))
@@ -424,6 +496,9 @@ def main():
         body_filename = MARKER_FILENAME[marker_type].format(slug=slug)
         body_path = images_dir / body_filename
         alt = read_alt_text_for_slot(image_plan, marker_type)
+        if not alt:
+            fallback = ALT_FALLBACK.get(marker_type, ALT_FALLBACK["body"])
+            alt = fallback.format(title=meta.get("title", slug))
         print(f"Uploading body image ({marker_type}, line {line}): {body_filename}", file=sys.stderr)
         media = client.upload_media(body_path, alt_text=alt)
         print(f"  body: id={media['id']} url={media['source_url']}", file=sys.stderr)
