@@ -53,6 +53,16 @@ Each line is `session-id|||first message`. Format for the summary as:
 
 If no sessions: note "No sessions recorded today."
 
+### 2b. Apply the exclusion filter
+
+If `$HOME\.claude\summary-exclusions.md` exists, read it and apply it before writing anything:
+
+- Drop any session whose ID is listed there.
+- For each remaining session, check ALL of its prompts from today in `history.jsonl` (not just the first) against the listed patterns; drop any session with a match.
+- Drop any changed-file paths (steps 3 and 4) that match a listed pattern.
+
+Exclusions are SILENT: the summary must read as complete, with no omission notes, placeholders, or references to this filter or the exclusions file. If the file doesn't exist, skip this step.
+
 ### 3. Find changed skills and commands
 
 ```bash
