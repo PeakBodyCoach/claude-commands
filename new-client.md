@@ -195,13 +195,34 @@ If the client is genuinely complete at onboarding (programme already drafted, nu
 
 ---
 
-## Step 7 — Confirm
+## Step 7 — Create the 1Fit account (optional)
+
+Most in-person and hybrid clients get programmed in 1Fit; online nutrition-only clients usually don't. Create the 1Fit account unless the client clearly won't use it (ask Tom if unsure). 1Fit emails the app invite automatically on creation, and creating the account here unlocks the rest of the 1Fit toolchain (`/write-programme` → `/1fit-sync`, plus `/habit-sync` if habits are tracked in 1Fit).
+
+**Requires the client's OWN email** — never a shared or partner address (a 1Fit login is 1:1 with the email). If the address on file is shared, skip this step, leave `**1Fit ID**: Pending` in the Profile, and add a tasks.md follow-up to create the account once their own email is captured.
+
+Run `create_client.py` from the 1fit-sync skill directory. It is **idempotent** (checks the client list first and creates nothing if they already exist) and writes the new **1Fit ID** straight into the Profile header via `--write-profile`:
+
+```
+cd "C:\Users\Tom\.claude\skills\1fit-sync"
+python create_client.py --first "[First]" --last "[Last]" --email "[own email]" --phone "[phone]" --write-profile "C:\Users\Tom\Documents\Home Vault\2 - Business\Clients\[Full Name]\[Full Name] - Profile.md" --json
+```
+
+The command prints a JSON result (`{"id": "...", "created": true/false, ...}`). To eyeball the form before it saves, add `--dry-run --headed` (fills but does not save).
+
+- **On success** — the client exists in 1Fit, the invite is emailed, and the Profile's `**1Fit ID**` field is filled. Note the ID in the confirm message.
+- **If it can't run** (auth lapsed → run `auth_setup.py`; name clash; no own email) — leave `**1Fit ID**: Pending`, add a tasks.md follow-up, and do NOT block the rest of onboarding.
+
+---
+
+## Step 8 — Confirm
 
 Reply with:
 
 - **Client name and folder path created**
 - **clients.csv row appended** (show the row)
 - **Files created** — list of: profile, Programmes.md, Nutrition Plan (real / stub / skipped), tasks.md section
+- **1Fit account** — created (show ID) / skipped (reason)
 - **Fields left as TBC** that Tom should fill in later
 - **Follow-up tasks** added to tasks.md (one-line summary)
 - **Reminders**:
