@@ -20,6 +20,7 @@ This is a guided, interactive run. Do ONE task, resolve it, then move to the nex
 **Scope** (default = Khaela's board):
 - Default: every open `- [ ]` task that does NOT contain `#person/tom`, across all `## [Client]` sections. That's Khaela's board.
 - If Tom runs it and names a client ("tasks helper for Simon") or asks for his own list, scope accordingly (a client's section, or `#person/tom` tasks).
+- **`all` argument** (`/tasks-helper all`, or "the whole board", "everything including mine"): work **every** open `- [ ]` task across all sections, including `#person/tom` ones. This is the scope the morning remote run uses (scheduled task "PBC Tasks Helper Remote" → `claude-tasks-remote.ps1`), so Tom can clear his own tasks and the pool in one pass. Live 1Fit is available in that run (Tom's machine).
 
 **Live-1Fit capability check** (decides whether automations can actually execute): live 1Fit runs through the persistent Chromium profile at `1fit-sync\.auth\profile\`. Before offering to run any live-1Fit automation, confirm it's available — the profile exists and the runner is logged in. **Khaela's 1Fit auth is not yet set up**, so when she runs this, treat live 1Fit as UNAVAILABLE: prep everything and hand off the live push, don't pretend to run it. When Tom runs it, live 1Fit is available.
 
