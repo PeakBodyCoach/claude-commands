@@ -13,6 +13,12 @@ on a schedule (hourly-ish 07:00-21:00) and on demand.
 - **Never take a client-facing or destructive action.** No bookings, no
   cancellations, no client messages, no 1Fit edits, no calendar changes. A
   client-related drop becomes a *flag for Tom*, nothing more.
+- **The one client-related write allowed** is routing a *session note* into the
+  client's own `_inbox` session file (the `session-note` category below). This
+  is not a client-facing action: it is Tom's own post-session capture, just
+  transported off his phone, landing additively in a local vault file so
+  `/process-sessions` can pick it up. It is done by a conservative helper that
+  never guesses; anything it can't match cleanly falls back to a Tom flag.
 - **When uncertain, downgrade to the digest.** Never guess an actionable
   destination. A wrong task or a wrong vault note is worse than an unclear-item
   ping.
@@ -47,8 +53,18 @@ are plausible and one is actionable, prefer the safer one or the digest.
 | **knowledge** | A fact, study, idea, or thing worth saving to the knowledge base | `_Web Clippings.md` seed |
 | **content-idea** | A hook, angle, reaction target, or post idea | `_Reel Inbox.md` |
 | **reminder** | A time-anchored nudge ("remind me Tuesday to…", "at 3pm…") | ntfy scheduled push |
-| **client** | Anything about a specific PT client (their session, weight, programme, message) | flag in `tasks.md` for Tom, DO NOT ACT |
+| **session-note** | Tom reporting on a session he just coached, almost always opening with a client's first name then observations: "clean", pains/flags, loads, form, next-time cues, RPE, mood | route into that client's `_inbox` session file (Step 3) |
+| **client** | Anything else about a specific PT client that is NOT a post-session report (their weight, a message to send, a programme question) | flag in `tasks.md` for Tom, DO NOT ACT |
 | **unclear** | Ambiguous, half a thought, can't tell what it wants | digest only |
+
+**session-note vs client vs task.** A `session-note` is Tom's own capture *about
+a session that just happened* — his post-session dictation, transported. It
+almost always opens by addressing a client by name ("Fraser, clean, wrist fine,
+step-ups to 20kg"). An instruction to *do* something about a client ("remind Rich
+his invoice is due", "book Simon Tuesday", "message Andrew his plan") is a `task`
+or `client` flag, never a session note. If it is not clearly a post-session
+report, do not classify it as `session-note` — the router will only write into a
+pristine session file anyway, and a wrong reading falls back to a Tom flag.
 
 Convert relative dates in the transcript to absolute using today's date.
 
@@ -105,6 +121,44 @@ date. (memory: never spend paid quota; ntfy free tier only.)
 ```
 - [ ] [voice-note drop] <verbatim gist> - review, do not auto-action #person/tom (raised: YYYY-MM-DD) #task
 ```
+
+**session-note** - This is Tom's own session capture, just transported, so it is
+allowed to land in his `_inbox` session file (the one client-related write the
+safety spine permits — additive, local, satisfies the `/process-sessions`
+capture gate, never a client-facing action). Hand the transcript to the router,
+which matches conservatively and never guesses. Pass `--backfill` so a
+successful write also pulls the corresponding workout from 1Fit into the file:
+```
+python C:\Users\Tom\vn-inbox\route_session_note.py --backfill --transcript "<the transcript, verbatim>"
+```
+Pass the transcript verbatim (transcription cleanup only) — the router strips the
+leading client name and converts voice-typed em dashes itself. Never summarise or
+embellish Tom's session notes. It prints one JSON line; act on `status`:
+
+- **`written` / `already_written`** - the note landed in `<file>` (`mode` is
+  `voice_notes` for substantive notes or `quick_capture` for a bare "clean").
+  With `--backfill`, a `backfill` object also reports the 1Fit pull:
+  `ok:true` means the `## 1Fit Log` was written (or was already present);
+  `ok:false` is non-fatal — the note still stands and the 9pm backfill is the
+  backstop, so just note it in the report. Archive as category `session-note`,
+  destination the filename.
+- **`occupied`** - a client matched but that session file already holds Tom's
+  capture (he is writing it up himself, or it is a second note for the same
+  session). Do NOT write over it. Fall back: append a `client` flag to `tasks.md`
+  (per the **client** route above) so nothing is lost, and archive as
+  `session-note` -> `tasks.md (occupied)`.
+- **`ambiguous`** - the name matched two clients, or the same client twice on the
+  target day. Do NOT guess. Fall back to a `client` flag in `tasks.md`; archive
+  as `session-note` -> `tasks.md (ambiguous)`.
+- **`no_match`** - no session file matched (no booking that day, wrong day, or an
+  unfamiliar name). Fall back to a `client` flag in `tasks.md`; archive as
+  `session-note` -> `tasks.md (no_match)`.
+
+The router only ever writes into a *pristine* session file (empty Quick capture
+and empty Voice Notes); if Tom has already started that file by hand it returns
+`occupied` and defers to him. One consequence: a second voice note for the same
+session lands as an `occupied` flag rather than a second append — that is the
+deliberate safe default, not a bug.
 
 **unclear** - Add to the digest list. No destination write.
 
