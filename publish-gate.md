@@ -134,13 +134,13 @@ Do not move on. The marker check is a precondition for the image presence check 
 Invoke the `seo-optimisation` skill against the article. The skill produces a full audit report ending in either:
 
 ```
-**GATE: PASS** ✓ — zero critical issues. Article cleared for `/publish-gate`.
+**GATE: PASS** ✓ - zero critical issues. Article cleared for `/publish-gate`.
 ```
 
 or
 
 ```
-**GATE: FAIL — fix [N] critical issues before publishing.**
+**GATE: FAIL - fix [N] critical issues before publishing.**
 - [headline of each critical issue]
 ```
 
