@@ -45,7 +45,7 @@ Before doing anything else, check the resolved path:
 1. If the article is at `Blog/1 - Draft/[topic-slug]/[topic-slug].md` (filename matches parent folder, parent of parent is `1 - Draft`), proceed. The slug is the parent folder name.
 2. If the article is at `Blog/1 - Draft/[any-name].md` (root of `1 - Draft/`, no per-article subfolder) OR inside a topic-bucket folder like `Blog/1 - Draft/blog-draft-training/[any-name].md`, **stop with this message**:
 
-   > This article isn't in the new per-article subfolder convention. `/publish-gate` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Either move the article into its own slug-named subfolder and re-run `/blog-images`, or — if this is a legacy draft you don't want to migrate — migrate the draft into the per-article subfolder convention (Blog\1 - Draft\[topic-slug]\) and run the publish pipeline from there.
+   > This article isn't in the new per-article subfolder convention. `/publish-gate` needs `Blog/1 - Draft/[topic-slug]/[topic-slug].md`. Move the article into its own slug-named subfolder (Blog\1 - Draft\[topic-slug]\), re-run `/blog-images`, and run the publish pipeline from there.
 
    Legacy drafts at the root of `1 - Draft/` are intentionally not handled by this command. The new structure applies to new articles only.
 
@@ -81,7 +81,7 @@ Walk the article body and search for any of these writer-shorthand placeholders 
 If any are found, stop with:
 
 ```
-GATE: FAIL — [N] unresolved placeholder(s) in body.
+GATE: FAIL - [N] unresolved placeholder(s) in body.
 
 Found:
   - Line [N]: [INTERNAL LINK: protein targets]
@@ -108,7 +108,7 @@ Validation:
 If 0 or 1 markers, stop with:
 
 ```
-GATE: FAIL — body has [N] image marker(s) but exactly 2 are required.
+GATE: FAIL - body has [N] image marker(s) but exactly 2 are required.
 ```
 
 Add the missing markers per `article-structure.md` (Image Markers in Body), then re-run.
@@ -116,14 +116,14 @@ Add the missing markers per `article-structure.md` (Image Markers in Body), then
 If 3+ markers, stop with:
 
 ```
-GATE: FAIL — body has [N] image markers but exactly 2 are required.
-Remove the surplus marker(s) — the standard PBC assembly is hero + 2 body images.
+GATE: FAIL - body has [N] image markers but exactly 2 are required.
+Remove the surplus marker(s) - the standard PBC assembly is hero + 2 body images.
 ```
 
 If any marker uses an unsupported type, stop with:
 
 ```
-GATE: FAIL — marker `<!-- IMAGE: [type] -->` at line [N] uses an unsupported type.
+GATE: FAIL - marker `<!-- IMAGE: [type] -->` at line [N] uses an unsupported type.
 Allowed: quote, diagram, body.
 ```
 
@@ -176,7 +176,7 @@ If both slot markers are the same type (e.g. two `body` markers), the second slo
 If any slot has missing or placeholder alt text, stop with:
 
 ```
-GATE: FAIL — alt text missing or unwritten for [N] slot(s).
+GATE: FAIL - alt text missing or unwritten for [N] slot(s).
 
   - Hero: alt text is empty
   - Slot 1 (quote): alt text still reads "[alt text for chosen photo]"
@@ -191,10 +191,10 @@ The pull-quote, diagram, and treated-stock outputs don't always need attribution
 If any stock-derived image lacks a matching attribution row, stop with:
 
 ```
-GATE: FAIL — photographer attribution missing for [N] image(s).
+GATE: FAIL - photographer attribution missing for [N] image(s).
 
-  - [slug]-featured.jpg — no attribution row in attributions.csv
-  - [slug]-body-featured.jpg — no attribution row in attributions.csv
+  - [slug]-featured.jpg - no attribution row in attributions.csv
+  - [slug]-body-featured.jpg - no attribution row in attributions.csv
 
 Add the missing rows to attributions.csv (photographer name, source platform, photo URL), then re-run.
 ```
@@ -208,9 +208,9 @@ For every `.jpg` in `images/` (top level, not subfolders — the `hero/` and `bo
 Report per-file:
 
 ```
-images/[topic-slug]-featured.jpg — 287KB ✓
-images/[topic-slug]-quote.jpg — 156KB ✓
-images/[topic-slug]-diagram.jpg — 612KB ✗ (over 500KB ceiling)
+images/[topic-slug]-featured.jpg - 287KB ✓
+images/[topic-slug]-quote.jpg - 156KB ✓
+images/[topic-slug]-diagram.jpg - 612KB ✗ (over 500KB ceiling)
 ```
 
 If any file is over the ceiling, stop with:
@@ -245,7 +245,7 @@ External link health (advisory):
   ⚠ 1 link returned 404:
       - "Hamilton-Reeves 2010 meta-analysis" → https://example.com/study  (line 31)
   ℹ 2 links could not be verified:
-      - "Wegovy SmPC" → https://www.medicines.org.uk/...  (403 — likely bot-blocking, check manually)
+      - "Wegovy SmPC" → https://www.medicines.org.uk/...  (403, likely bot-blocking, check manually)
       - "Lowe et al. 2020" → https://jamanetwork.com/...  (timeout, try again later)
 ```
 
@@ -325,7 +325,7 @@ On `yes`:
 
 5. **Report back:**
 
-   > Archived `[topic-slug]` to `Blog/3 - PostedArchive/`. Run `/pipeline-status` whenever you next want to see the updated published-count milestones — the archive move alone updates the count, nothing else to flip.
+   > Archived `[topic-slug]` to `Blog/3 - PostedArchive/`. Run `/pipeline-status` whenever you next want to see the updated published-count milestones. The archive move alone updates the count, nothing else to flip.
 
 On `no`: leave the folder untouched. Tell the user:
 
