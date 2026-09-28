@@ -151,7 +151,20 @@ def normalize_body(body):
     while lines and lines[-1].strip() == "":
         lines.pop()
 
-    return "\n".join(lines).strip() + "\n"
+    text = "\n".join(lines)
+
+    # Trailing vault-only notes block: a final "---" divider followed by
+    # "**Internal link placeholders:** ..." (and anything after it). This is
+    # draft-side furniture from the blog-writing output format and must never
+    # reach WordPress.
+    text = re.sub(
+        r"\n-{3,}\s*\n\s*\*\*Internal link placeholders?:?\*\*.*\Z",
+        "",
+        text,
+        flags=re.S | re.I,
+    )
+
+    return text.strip() + "\n"
 
 
 def write_frontmatter(meta, body):
@@ -466,9 +479,14 @@ def main():
     print(f"Slug: {slug}", file=sys.stderr)
 
     raw = article_path.read_text(encoding="utf-8")
-    meta, body = parse_frontmatter(raw)
-    body = normalize_body(body)
+    meta, body_raw = parse_frontmatter(raw)
+    body = normalize_body(body_raw)
     validate_frontmatter(meta)
+
+    # Resolve the post title, then strip the leading H1 from the body: WP
+    # renders the title itself, so a body H1 ships as a duplicate heading.
+    title = meta.get("title") or extract_h1(body) or slug
+    body = re.sub(r"^\s*#\s+.+?\n+", "", body, count=1)
 
     is_republish = bool(meta.get("wp_post_id"))
     if is_republish:
@@ -517,8 +535,6 @@ def main():
     attr_html = format_attribution_paragraph(images_dir / "attributions.csv", used_filenames)
     if attr_html:
         body_html += "\n\n" + attr_html
-
-    title = meta.get("title") or extract_h1(body) or slug
 
     status = None
     if args.publish:
@@ -590,7 +606,9 @@ def main():
         # is the only writeback so future re-publishes know to PATCH.
         wrote = "wp_post_id"
 
-    article_path.write_text(write_frontmatter(meta, body), encoding="utf-8")
+    # Writeback updates frontmatter only; the authored body (including any
+    # vault-side scaffolding stripped for WP) is preserved verbatim.
+    article_path.write_text(write_frontmatter(meta, body_raw), encoding="utf-8")
     print(f"Wrote {wrote} to frontmatter.", file=sys.stderr)
 
     print(post["link"])  # stdout = the URL for the slash command to capture

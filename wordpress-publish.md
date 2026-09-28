@@ -206,6 +206,16 @@ The theme's `single.php` auto-renders two CTAs on every blog post (a sidebar "Wo
 
 Uses `markdown-it-py` with the `commonmark` preset plus the `table` extension. Inline HTML in the markdown is preserved (set `html=True`). Output is raw HTML sent in the `content` field; WP renders it inside a Classic block when opened in the block editor.
 
+### Draft scaffolding stripped at push (2026-09-28)
+
+The script strips vault-only furniture from the body before rendering, so it never reaches WordPress regardless of what the draft carries:
+
+- The leading `## ARTICLE: Title` / `# Title` heading block plus the `**Target keyword:** / **Word count:**` lines and their divider. The heading is used to resolve the post title, then removed — WP renders the title itself, so a body H1 would ship as a duplicate heading.
+- The trailing `---` + `**Internal link placeholders:** ...` notes block from the blog-writing output format.
+- A trailing `[BUTTON: ...]` placeholder.
+
+The frontmatter writeback preserves the authored body verbatim (scaffolding included) — only frontmatter fields change in the vault file. Set by Tom's review of the what-is-functional-training push, where both the H1 and the placeholder block shipped live.
+
 ### Cache
 
 Reads and writes `~/.claude/wordpress-cache.json` for category slug→ID lookups. Shared with `/resolve-internal-links` (which reads the published-posts list).
